@@ -1,0 +1,27 @@
+<div layout-padding flex="100">
+    <div class="md-whiteframe-7dp" flex="100">
+        <md-input-container placeholder="Show only" flex="30">
+            <md-select ng-model="ShowOnly" flex="100">
+                <md-option ng-value="'channel'">Channel's</md-option>
+                <md-option ng-value="'playlist'">Playlist's</md-option>
+                <md-option ng-value="'video'">Video's</md-option>
+            </md-select>
+        </md-input-container>
+    </div>
+    <div layout="row" layout-wrap>
+        <md-card ng-repeat="QueryResult in QueryResults" flex="nogrow" style="width: 240px" class="nga-slide-left nga-default nga-stagger-fast">
+            <img src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-card-image">
+            <md-card-title>
+                <md-card-title-text>
+                    <span class="md-headline">{{ QueryResult.snippet.title }}</span>
+                </md-card-title-text>
+            </md-card-title>
+            <md-card-actions>
+                <md-button class="md-icon-button">
+                    <md-icon>play_arrow</md-icon>
+                </md-button>
+                <md-button class="md-icon-button" ng-disabled="!QueryResult.checked"><md-icon ng-bind="QueryResult.add_button">add</md-icon></md-button>
+            </md-card-actions>
+        </md-card>
+    </div>
+</div>

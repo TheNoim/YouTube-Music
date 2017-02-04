@@ -1,0 +1,33 @@
+{
+  "name": "YouTube-Music",
+  "description": "A electron youtube music/video player (I hate it to use a browser to listen to music)",
+  "main": "src/main.js",
+  "authors": [
+    "Nils Bergmann <nilsbergmann@noim.io>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "youtube",
+    "music",
+    "client",
+    "desktop",
+    "electron"
+  ],
+  "homepage": "https://github.com/TheNoim/YouTube-Music",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "src/comp",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-material": "^1.1.3",
+    "angular-ui-router": "^0.4.2",
+    "angular-ui-router-title": "^0.1.1",
+    "angular-animate-css": "^0.0.4",
+    "material-design-icons": "^3.0.1"
+  }
+}
