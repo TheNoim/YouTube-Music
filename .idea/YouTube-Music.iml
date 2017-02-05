@@ -16,5 +16,6 @@
     <orderEntry type="library" name="electron-builder-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="bower" level="project" />
     <orderEntry type="library" name="nedb-DefinitelyTyped" level="application" />
+    <orderEntry type="library" name="fs-extra-DefinitelyTyped" level="application" />
   </component>
 </module>

@@ -18,7 +18,9 @@ an.directive('mdPlayer', () => {
             $scope.$watch('playlistId', () => {
                 log.info("Set current playlist to " + $scope.playlistId);
             });
-            $scope.volume = 0.9;
+            if ($scope.volume == null){
+                $scope.volume = 0.9;
+            }
             $scope.$watch('volume', () => {
                 $rootScope.$emit('set volume', $scope.volume);
             });

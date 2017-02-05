@@ -5,6 +5,13 @@ const log = require('./Logger')();
 const request = require('request');
 const async = require('async');
 const url = require('url');
+const fs = require('fs');
+
+let downloadTaskList = {};
+
+const downloadTask = async.queue((info, Callback) => {
+
+}, 3);
 
 module.exports = function (cfg) {
     log.info("Setup main process socket events");
@@ -124,15 +131,27 @@ module.exports = function (cfg) {
                     }
                 });
             } else if (data.id.kind == "youtube#video") {
-                log.info(`Add video with id ${data.id.videoId}`);
-                data._id = data.id.videoId;
-                data.inLibrary = true;
-                delete data["$$hashKey"];
-                db.insert(data, (error, newDoc) => {
-                    if (error) throw error;
-                    log.info(`Video added to db. New data: `, newDoc);
-                    msg.reply({});
-                    socket.send('update library');
+                db.findOne({
+                    _id: data.id.videoId
+                }, (error, doc) => {
+                    if (doc){
+                        db.update({_id: data.id.videoId}, {inLibrary: true}, () => {
+                            log.info(`Video added to db. New data: `, newDoc);
+                            msg.reply({});
+                            socket.send('update library');
+                        });
+                    } else {
+                        log.info(`Add video with id ${data.id.videoId}`);
+                        data._id = data.id.videoId;
+                        data.inLibrary = true;
+                        delete data["$$hashKey"];
+                        db.insert(data, (error, newDoc) => {
+                            if (error) throw error;
+                            log.info(`Video added to db. New data: `, newDoc);
+                            msg.reply({});
+                            socket.send('update library');
+                        });
+                    }
                 });
             }
         }
@@ -147,14 +166,50 @@ module.exports = function (cfg) {
             } else if (data.id.kind == "youtube#video") {
                 id = data.id.videoId;
             }
-            log.info(`Remove data with id ${id}`);
-            db.remove({_id: id}, {}, (error) => {
-                log.info(`Removed data with id ${id}`);
-                msg.reply(error);
-                socket.send('update library');
+            const remove = function () {
+                log.info(`Remove data with id ${id}`);
+                db.remove({_id: id}, {}, (error) => {
+                    log.info(`Removed data with id ${id}`);
+                    msg.reply(error);
+                    socket.send('update library');
+                });
+            };
+            db.findOne({_id: id}, (error, doc) => {
+                if (doc){
+                    if (data.id.kind == "youtube#video"){
+                        if (doc.downloadFinished){
+                            fs.unlink(doc.path, () => {
+                                remove();
+                            });
+                        } else {
+                            remove();
+                        }
+                    } else {
+                        async.eachSeries(data.items, (Video, EachCallback) => {
+                            db.findOne({_id: Video.snippet.resourceId.videoId}, (error, vResult) => {
+                                if (vResult){
+                                    if (vResult.downloadFinished){
+                                        fs.unlink(vResult.path, () => {
+                                            EachCallback();
+                                        });
+                                    } else {
+                                        EachCallback();
+                                    }
+                                } else {
+                                    EachCallback();
+                                }
+                            });
+                        }, () => {
+                            remove();
+                        });
+                    }
+                } else {
+                    msg.reply();
+                }
             });
         } else {
             // Error
+            msg.reply();
         }
     });
 
@@ -280,4 +335,35 @@ module.exports = function (cfg) {
             }
         });
     });
+
+    socket.on('event:download', (msg) => {
+        const data = msg.data();
+        if (data.kind == "youtube#playlist"){
+            db.findOne({_id: data.playlistId}, (error, Playlist) => {
+                if (Playlist){
+                    db.update({_id: data.playlistId}, {downloading: true}, () => {
+                        async.each(Playlist.items, (video, callback) => {
+                            downloadTask.push({videoId: video.snippet.resourceId.videoId});
+                            callback();
+                        }, () => {
+
+                        });
+                    });
+                } else {
+                    msg.reply();
+                }
+            });
+        }
+    });
+
 };
+
+function checkIfPlaylistDownloadFinished(playlistId, callback) {
+    db.findOne({_id: playlistId}, (error, playlist) => {
+        if (playlist.downloading == true){
+
+        } else {
+            async.each(Playlist.item)
+        }
+    });
+}

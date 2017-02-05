@@ -74,7 +74,7 @@ YTLib.prototype.download = function (downloadlocation, filename, save, callback,
             }).on('error', (error) => {
                 self.emit('error', error);
             }).on('end', () => {
-                callback();
+                callback(filename);
             });
             if (save) {
                 p.pipe(fs.createWriteStream(savepath));

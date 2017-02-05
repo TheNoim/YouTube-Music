@@ -2,7 +2,7 @@
 <project version="4">
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{YouTube-Music/node_modules}" />
-    <file url="PROJECT" libraries="{YouTube-Music/node_modules, angular-DefinitelyTyped, angular-material-DefinitelyTyped, async-DefinitelyTyped, bower, electron-DefinitelyTyped, electron-builder-DefinitelyTyped, electron-notifications-DefinitelyTyped, nedb-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{YouTube-Music/node_modules, angular-DefinitelyTyped, angular-material-DefinitelyTyped, async-DefinitelyTyped, bower, electron-DefinitelyTyped, electron-builder-DefinitelyTyped, electron-notifications-DefinitelyTyped, fs-extra-DefinitelyTyped, nedb-DefinitelyTyped}" />
     <includedPredefinedLibrary name="ECMAScript 6" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
