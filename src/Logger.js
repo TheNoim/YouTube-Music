@@ -9,7 +9,7 @@ module.exports = function (nocolors) {
         transports: [
             new ElectronConsole({
                 level: 'info',
-                handleExceptions: true,
+                handleExceptions: false,
                 levels: {
                     trace: 0,
                     input: 1,

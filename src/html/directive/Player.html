@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<div layout="row" layout-align="center center" flex="100" style="height: 100%">
+    <div layout="column" flex="100" layout-align="center center" style="height: 100%">
+        <div layout="column" class="md-whiteframe-8dp">
+            <img src="{{ Data.CurrentVideoInfo.snippet.thumbnails.maxres.url }}" style="flex: 0 0 auto;display: flex;width: 300px;height: 300px;user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <md-toolbar style="width: 300px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <md-progress-linear class="md-accent md-hue-3" md-mode="buffer" value="{{ Data.percent }}"
+                                    md-buffer-value="{{ Data.BufferPercent }}" id="player_progress">
+                </md-progress-linear>
+                <div layout="row" layout-padding layout-align="space-between center">
+                    <div class="md-subhead" ng-if="Data.CurrentVideoInfo">{{ Data.CurrentVideoInfo.snippet.title }}</div>
+                    <div class="md-subhead" ng-if="!Data.CurrentVideoInfo">No track</div>
+                    <div class="md-subhead" ng-if="Data.PrettyDuration">{{ Data.PrettyDuration }}</div>
+                </div>
+                <div layout="row" layout-align="space-between">
+                    <div layout="row">
+                        <md-button class="md-icon-button">
+                            <md-icon>skip_previous</md-icon>
+                        </md-button>
+                        <md-button class="md-icon-button" ng-click="triggerPlayer()">
+                            <md-icon ng-if="!Data.playing">play_arrow</md-icon>
+                            <md-icon ng-if="Data.playing">pause</md-icon>
+                        </md-button>
+                        <md-button class="md-icon-button">
+                            <md-icon>skip_next</md-icon>
+                        </md-button>
+                    </div>
+                </div>
+            </md-toolbar>
+        </div>
+    </div>
+</div>

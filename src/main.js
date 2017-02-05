@@ -48,6 +48,9 @@ function createWindow(db) {
 }
 
 function bootStrap() {
+
+    log.info(path.join(app.getPath('userData'), 'Database.db'));
+
     const db = new NeDB({
         filename: path.join(app.getPath('userData'), 'Database.db'),
         autoload: true

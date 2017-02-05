@@ -1,27 +1,47 @@
 <div layout-padding flex="100">
-    <div class="md-whiteframe-7dp" flex="100">
-        <md-input-container placeholder="Show only" flex="30">
-            <md-select ng-model="ShowOnly" flex="100">
-                <md-option ng-value="'channel'">Channel's</md-option>
+    <div flex>
+        <md-input-container placeholder="Show only" style="width: 30%" flex="nogrow">
+            <md-select ng-model="showonly" style="width: 100%" flex>
                 <md-option ng-value="'playlist'">Playlist's</md-option>
                 <md-option ng-value="'video'">Video's</md-option>
             </md-select>
         </md-input-container>
     </div>
-    <div layout="row" layout-wrap>
-        <md-card ng-repeat="QueryResult in QueryResults" flex="nogrow" style="width: 240px" class="nga-slide-left nga-default nga-stagger-fast">
-            <img src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-card-image">
-            <md-card-title>
-                <md-card-title-text>
-                    <span class="md-headline">{{ QueryResult.snippet.title }}</span>
-                </md-card-title-text>
-            </md-card-title>
-            <md-card-actions>
-                <md-button class="md-icon-button">
-                    <md-icon>play_arrow</md-icon>
-                </md-button>
-                <md-button class="md-icon-button" ng-disabled="!QueryResult.checked"><md-icon ng-bind="QueryResult.add_button">add</md-icon></md-button>
-            </md-card-actions>
-        </md-card>
-    </div>
+    <!--<div layout="row" layout-wrap>-->
+    <!--<md-card ng-repeat="QueryResult in QueryResults" flex="nogrow" style="width: 240px" class="nga-slide-left nga-default nga-stagger-fast">-->
+    <!--<img src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-card-image">-->
+    <!--<md-card-title>-->
+    <!--<md-card-title-text>-->
+    <!--<span class="md-headline">{{ QueryResult.snippet.title }}</span>-->
+    <!--</md-card-title-text>-->
+    <!--</md-card-title>-->
+    <!--<md-card-actions>-->
+    <!--<md-button class="md-icon-button">-->
+    <!--<md-icon>play_arrow</md-icon>-->
+    <!--</md-button>-->
+    <!--<md-button class="md-icon-button" ng-disabled="!QueryResult.checked" ng-click="AddOrRemove(QueryResult, $index)"><md-icon ng-bind="QueryResult.add_button">add</md-icon></md-button>-->
+    <!--</md-card-actions>-->
+    <!--</md-card>-->
+    <!--</div>-->
+    <md-list flex="100">
+        <md-list-item ng-repeat="QueryResult in QueryResults" class="md-3-line nga-collapse nga-default">
+            <img ng-src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-avatar" ng-click="showDetails($index)"
+                 style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <div class="md-list-item-text" layout="column">
+                <h3>{{ QueryResult.snippet.title }}</h3>
+                <h4>by {{ QueryResult.snippet.channelTitle }}</h4>
+                <p>{{ QueryResult.snippet.description }}</p>
+            </div>
+            <md-button ng-click="play($index)" class="md-icon-button"
+                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <md-icon>play_arrow</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" ng-disabled="!QueryResult.checked"
+                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;"
+                       ng-click="AddOrRemove(QueryResult, $index)">
+                <md-icon ng-bind="QueryResult.add_button">add</md-icon>
+            </md-button>
+        </md-list-item>
+    </md-list>
+
 </div>

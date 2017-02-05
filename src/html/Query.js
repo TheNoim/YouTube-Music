@@ -15,14 +15,16 @@ module.exports = {
      * @param $scope
      */
     SearchOnYouTube: function (Query, Order, Only, $scope, socket) {
-        log.info(`Query: ${Query}`);
+        log.info(`Query: ${Query} - ${Only}`);
         let Params = {
             part: "snippet",
             key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
             q: Query,
-            order: Order?Order:"relevance"
+            order: Order?Order:"relevance",
+            maxResults: 50
         };
         if (Only) Params.type = Only;
+        if (!Only) Params.type = 'video,playlist';
         let SearchURL = url.parse('https://www.googleapis.com/youtube/v3/search');
         SearchURL.query = Params;
         request(url.format(SearchURL), {
@@ -30,6 +32,7 @@ module.exports = {
         }, (error, response, body) => {
             if (!error && response.statusCode == 200){
                 $scope.QueryResults = body.items;
+                console.log($scope.QueryResults);
                 async.each($scope.QueryResults, (CurrentResult, callback) => {
                     socket.send('in library ?', CurrentResult, (error, result) => {
                         if (error) throw error;
@@ -41,8 +44,9 @@ module.exports = {
                         CurrentResult.checked = true;
                         callback();
                     });
-                }, () => {});
-
+                }, () => {
+                    $scope.safeApply();
+                });
             }
         });
     }  

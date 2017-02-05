@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<md-dialog>
+    <md-toolbar>
+        <div class="md-toolbar-tools">
+            <span>{{ Details.title }}</span>
+        </div>
+    </md-toolbar>
+    <md-content layout-padding layout="column">
+        <img ng-src="{{ Details.thumbnail }}" style="height: 100%; width: auto;">
+        <video-description kind="Details.kind" video-id="Details.videoId"></video-description>
+    </md-content>
+</md-dialog>

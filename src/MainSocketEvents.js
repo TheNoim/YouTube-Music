@@ -60,61 +60,118 @@ module.exports = function (cfg) {
 
     socket.on('message:add to library', (msg) => {
         const data = msg.data();
-        let id;
         if (data.id){
             if (data.id.kind == "youtube#playlist"){
-                const pageCount = parseInt(data.pageInfo.totalResults / data.pageInfo.resultsPerPage);
-                if (data.nextPageToken){
-                    let next = data.nextPageToken;
-                    let videos = [];
-                    videos.concat(data.items);
-                    async.timesSeries(pageCount, (TimeCallback) => {
-                        let Params = {
-                            part: "snippet",
-                            key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
-                            playlistId: data.id.playlistId,
-                            pageToken: next
-                        };
-                        if (Only) Params.type = Only;
-                        let PlayListRequestURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
-                        PlayListRequestURL.query = Params;
-                        request(url.format(PlayListRequestURL), {
-                            json: true
-                        }, (error, response, body) => {
-                            if (!error && response.statusCode == 200) {
-                                if (body.nextPageToken){
-                                    next = body.nextPageToken;
-                                }
-                                videos.concat(body.items);
-                                TimeCallback();
-                            } else {
-                                TimeCallback();
-                            }
-                        });
-                    }, () => {
-                        data.items = videos;
-                        data._id = data.id.playlistId;
-                        db.insert(data, (error) => {
-                            if (error){
-                                msg.reply({
-                                    error: error
+                let Params = {
+                    part: "snippet",
+                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
+                    playlistId: data.id.playlistId
+                };
+                let FirstURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
+                FirstURL.query = Params;
+                request(url.format(FirstURL), {
+                    json: true
+                }, (error, response, body) => {
+                    if (!error && response.statusCode == 200) {
+                        const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
+                        if (body.nextPageToken){
+                            let next = body.nextPageToken;
+                            let videos = [];
+                            videos = videos.concat(body.items);
+                            async.timesSeries(pageCount, (n, TimeCallback) => {
+                                let Params = {
+                                    part: "snippet",
+                                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
+                                    playlistId: data.id.playlistId,
+                                    pageToken: next
+                                };
+                                let PlayListRequestURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
+                                PlayListRequestURL.query = Params;
+                                request(url.format(PlayListRequestURL), {
+                                    json: true
+                                }, (error, response, xBody) => {
+                                    if (!error && response.statusCode == 200) {
+                                        if (xBody.nextPageToken){
+                                            next = xBody.nextPageToken;
+                                        }
+                                        videos = videos.concat(xBody.items);
+                                        TimeCallback();
+                                    } else {
+                                        TimeCallback();
+                                    }
                                 });
-                            } else {
-                                msg.reply({});
-                            }
-                        });
-                    });
-                } else {
-
-                }
-
+                            }, () => {
+                                data.items = videos;
+                                data._id = data.id.playlistId;
+                                data.inLibrary = true;
+                                delete data["$$hashKey"];
+                                db.insert(data, (error) => {
+                                    if (error){
+                                        msg.reply({
+                                            error: error
+                                        });
+                                    } else {
+                                        msg.reply({});
+                                    }
+                                    socket.send('update library');
+                                });
+                            });
+                        } else {
+                            // Error
+                        }
+                    } else {
+                        // Error
+                    }
+                });
             } else if (data.id.kind == "youtube#video") {
+                log.info(`Add video with id ${data.id.videoId}`);
                 data._id = data.id.videoId;
-                db.insert(data, () => {
-
+                data.inLibrary = true;
+                delete data["$$hashKey"];
+                db.insert(data, (error, newDoc) => {
+                    if (error) throw error;
+                    log.info(`Video added to db. New data: `, newDoc);
+                    msg.reply({});
+                    socket.send('update library');
                 });
             }
         }
     });
 
+    socket.on('message:remove from library', (msg) => {
+        const data = msg.data();
+        if (data.id){
+            let id;
+            if (data.id.kind == "youtube#playlist"){
+                id = data.id.playlistId;
+            } else if (data.id.kind == "youtube#video") {
+                id = data.id.videoId;
+            }
+            log.info(`Remove data with id ${id}`);
+            db.remove({_id: id}, {}, (error) => {
+                log.info(`Removed data with id ${id}`);
+                msg.reply(error);
+                socket.send('update library');
+            });
+        } else {
+            // Error
+        }
+    });
+
+    socket.on('message:get video informations', (msg) => {
+        const data = msg.data();
+        db.findOne({_id: data.videoId}, (err, doc) => {
+            if (doc){
+                msg.reply(doc);
+            } else {
+                request(`https://www.googleapis.com/youtube/v3/videos?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&id=${data.videoId}`, {json: true}, (error, response, body) => {
+                    if (!error && response.statusCode == 200) {
+                        msg.reply(body.items[0]);
+                    } else {
+                        msg.reply({error: "Can not get video informations"});
+                    }
+                });
+            }
+        });
+    });
 };

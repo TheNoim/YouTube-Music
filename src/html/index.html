@@ -6,11 +6,17 @@
     <link rel="stylesheet" href="../comp/angular-material/angular-material.min.css">
     <link rel="stylesheet" href="../comp/angular-animate-css/build/nga.all.min.css">
     <link rel="stylesheet" href="../comp/material-design-icons/iconfont/material-icons.css">
+    <link rel="stylesheet" href="style.css">
     <title>YouTube Music Player</title>
 </head>
 <body ng-app="YouTubePlayer" ng-cloak style="height: 100vh" flex-auto>
 <main ng-controller="MainController" layout="column" class="nga-fade nga-default nga-stagger-slow" flex-auto
       style="height: 100%">
+    <div style="height: 0px; width: 0px; display: none;">
+        <video id="HTMLVideoPlayer">
+            <source src="{{ CurrentVideoSrc }}">
+        </video>
+    </div>
     <md-sidenav md-component-id="SideNav">
         <md-toolbar>
             <div class="md-toolbar-tools">
@@ -21,11 +27,14 @@
             <md-list-item ng-click="toggleSideNav()" ui-sref="home">
                 <span>Home</span>
             </md-list-item>
+            <md-list-item ng-click="toggleSideNav()" ui-sref="player">
+                <span>Player</span>
+            </md-list-item>
             <md-list-item ng-click="toggleSideNav()" ui-sref="library">
                 <span>Library</span>
             </md-list-item>
             <md-list-item ng-click="toggleSideNav()" ui-sref="search-youtube">
-                <span>Search On YT</span>
+                <span>Search on YT</span>
             </md-list-item>
         </md-list>
     </md-sidenav>
@@ -36,10 +45,11 @@
             </md-button>
             <span ng-bind="($title || 'Home')"></span>
             <span flex></span>
+            <md-button ng-click="PlayTest()">Play Test</md-button>
             <md-autocomplete md-input-id="SearchField" placeholder="Search" md-search-text-change="DoQuery(textquery)"
                              ng-if="search" class="nga-slide-right nga-fast nga-stagger-fast" flex="30"
                              md-items="QueryResult in QueryResults" md-search-text="textquery"
-                             md-item-text="QueryResult.snippet.title">
+                             md-item-text="QueryResult.snippet.title" md-delay="1000">
                 <md-item-template>
                     <span md-highlight-text="searchText">{{ QueryResult.snippet.title }}</span>
                 </md-item-template>
@@ -53,16 +63,6 @@
     <md-content style="height: 100%">
         <div ui-view class="nga-fade nga-default nga-stagger-slow" style="height: 100%"></div>
     </md-content>
-    <md-toolbar class="md-whiteframe-10dp" style="height: 100px !important;">
-        <div class="md-toolbar-tools" layout="column" layout-align="center center" style="width: 100%; height: 100px !important; max-height: 100px !important;">
-            <div layout="row" style="width: 100%">
-                <md-button class="md-icon-button">
-                    <md-icon ng-bind="PlayIcon"></md-icon>
-                </md-button>
-                <md-slider ng-model="PlayProgress" style="width: 90%" md-discrete step="0.01" min="0" max="1" flex="auto"></md-slider>
-            </div>
-        </div>
-    </md-toolbar>
 </main>
 <script src="../comp/angular/angular.min.js"></script>
 <script src="../comp/angular-aria/angular-aria.min.js"></script>
@@ -71,5 +71,7 @@
 <script src="../comp/angular-ui-router/release/angular-ui-router.min.js"></script>
 <script src="../comp/angular-ui-router-title/angular-ui-router-title.js"></script>
 <script type="text/javascript" src="index.js"></script>
+<script src="directive/Player.js"></script>
+<script src="directive/LoadVideoDescription.js"></script>
 </body>
 </html>

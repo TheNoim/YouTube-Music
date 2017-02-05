@@ -26,6 +26,7 @@
     "fs-extra": "^2.0.0",
     "get-youtube-id": "^1.0.0",
     "nedb": "^1.8.0",
+    "percentage-calc": "^0.0.1",
     "request": "^2.79.0",
     "request-progress": "^3.0.0",
     "winston": "^2.3.1",
