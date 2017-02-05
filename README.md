@@ -1,4 +1,5 @@
 # YouTube-Music
+![Picture of this awesome player](https://raw.githubusercontent.com/TheNoim/YouTube-Music/master/Alpha.PNG)
 There is no good youtube player for music, this is why I did this :D  
 At the moment this player is highly experimental and you need to start it over the terminal or cmd.
 
