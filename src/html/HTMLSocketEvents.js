@@ -10,6 +10,7 @@ module.exports = function (cfg) {
     const $scope = cfg.$scope;
     const socket = cfg.socket;
     const $mdDialog = cfg.$mdDialog;
+    const $rootScope = cfg.$rootScope;
 
     log.info("Setup error event");
     socket.on('event:ERROR', (Payload) => {
@@ -30,4 +31,16 @@ module.exports = function (cfg) {
         $mdDialog.show(erroralert);
     });
     log.info("Error event setup finished");
+
+    socket.on('event:Next track', () => {
+        $rootScope.$emit('Skip current song');
+    });
+
+    socket.on('event:Last track', () => {
+        $rootScope.$emit('Last song in pl');
+    });
+
+    socket.on('event:PausePlay', () => {
+        $rootScope.$emit('Trigger player');
+    });
 };

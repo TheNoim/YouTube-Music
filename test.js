@@ -10,7 +10,7 @@ testdownload.on('progress', (progress) => {
     console.log("Progress", progress);
 });
 //testdownload.download();
-testdownload.download('./', 'temp', false,() => {
+testdownload.download('./', 'temp.mp4', true,() => {
 
 });
 

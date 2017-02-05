@@ -1,7 +1,7 @@
 /**
  * Created by nilsbergmann on 03.02.17.
  */
-const {app, BrowserWindow, ipcMain} = require('electron');
+const {app, BrowserWindow, ipcMain, globalShortcut} = require('electron');
 const {Socket, Transport} = require('electron-ipc-socket');
 const url = require('url');
 const path = require('path');
@@ -13,6 +13,10 @@ const Express = require('./Express');
 const NeDB = require('nedb');
 const fs = require('fs-extra');
 
+process.on('uncaughtException', function (e) {
+    log.error(e);
+});
+
 let mainWindow;
 
 /**
@@ -23,7 +27,7 @@ function createWindow(db) {
 
     const ex = Express(db);
 
-    mainWindow = new BrowserWindow({width: 1400, height: 800});
+    mainWindow = new BrowserWindow({width: 1400, height: 800, minWidth: 635, minHeight: 573});
     mainWindow.loadURL(url.format({
         pathname: path.join(path.join(__dirname, 'html/'), 'index.html'),
         protocol: 'file:',
@@ -44,6 +48,20 @@ function createWindow(db) {
         mainWindow: mainWindow,
         db: db
     });
+
+    globalShortcut.register('MediaNextTrack', () => {
+        socket.send('Next track');
+    });
+    globalShortcut.register('MediaPreviousTrack', () => {
+        socket.send('Last track');
+    });
+    globalShortcut.register('MediaPlayPause', () => {
+        socket.send('PausePlay');
+    });
+    globalShortcut.register('MediaStop', () => {
+        socket.send('PausePlay');
+    });
+
 
 }
 

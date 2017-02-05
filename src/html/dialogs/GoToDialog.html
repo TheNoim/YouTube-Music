@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<md-dialog>
+    <md-dialog-content>
+        <md-list>
+            <md-list-item ng-repeat="Video in Data.CurrentPL.items" class="md-2-line">
+                <img ng-src="{{ Video.snippet.thumbnails.high.url }}" class="md-avatar"
+                     style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <div class="md-list-item-text" layout="column">
+                    <h3>{{ Video.snippet.title }}</h3>
+                    <h4>by {{ Video.snippet.channelTitle }}</h4>
+                </div>
+                <md-button ng-click="play($index)" class="md-icon-button"
+                           style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                    <md-icon>play_arrow</md-icon>
+                </md-button>
+            </md-list-item>
+        </md-list>
+    </md-dialog-content>
+    <md-dialog-actions>
+        <md-button ng-click="cancel()">Cancel</md-button>
+    </md-dialog-actions>
+</md-dialog>

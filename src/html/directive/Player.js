@@ -12,22 +12,20 @@ an.directive('mdPlayer', () => {
             onTrackEnd: "&onTrackEnd",
             socket: "=socket"
         },
-        controller: ($scope, $element, $attrs, $rootScope) => {
+        controller: ($scope, $element, $attrs, $rootScope, $mdDialog) => {
             const percentage = require('percentage-calc');
             $scope.playlistId = $attrs.playlistId;
             $scope.$watch('playlistId', () => {
                 log.info("Set current playlist to " + $scope.playlistId);
             });
+            $scope.volume = 0.9;
+            $scope.$watch('volume', () => {
+                $rootScope.$emit('set volume', $scope.volume);
+            });
 
             $rootScope.$on('UpdatePlayerData', (ev, Data) => {
                 $scope.Data = Data;
-                /*if (Data.buffered.length > 0){
-                    const bufferedEnd = Data.buffered.end(Data.buffered.length - 1);
-                    if (Data.duration > 0){
-                        $scope.BufferPercent = ((bufferedEnd / Data.duration)*100);
-                        console.log($scope.BufferPercent);
-                    }
-                }*/
+                $scope.volume = Data.volume;
                 $scope.safeApply();
             });
             $scope.ProgressVideoBar = angular.element(document.getElementById("player_progress"));
@@ -39,6 +37,41 @@ an.directive('mdPlayer', () => {
             $scope.triggerPlayer = function () {
                 $rootScope.$emit('Trigger player');
             };
+
+            $scope.back = function () {
+                $rootScope.$emit('Last song in pl');
+            };
+
+            $scope.skip = function () {
+                $rootScope.$emit('Skip current song');
+            };
+
+            $scope.GoToInPl = function () {
+                $mdDialog.show({
+                    fullscreen: true,
+                    scope: $scope,
+                    preserveScope: true,
+                    controller: function ($scope, $mdDialog, $rootScope) {
+                        $scope.cancel = function () {
+                            $mdDialog.hide();
+                        };
+                        $scope.play = function (index) {
+                            $rootScope.$emit('Play', $scope.Data.CurrentPL.items[index].snippet.resourceId.videoId, $scope.Data.CurrentPL.items[index].snippet.position);
+                            $mdDialog.hide();
+                        };
+                    },
+                    templateUrl: 'dialogs/GoToDialog.html'
+                });
+            };
+
+            $rootScope.$on('!block buttons because loading', () => {
+                $scope.loadingPL = false;
+                $scope.safeApply();
+            });
+            $rootScope.$on('block buttons because loading', () => {
+                $scope.loadingPL = true;
+                $scope.safeApply();
+            });
         },
         link: (scope, elem, attrs) => {
             scope.safeApply = function(fn) {

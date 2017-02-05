@@ -29,7 +29,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     log.info("Loading MainController");
     const socket = Socket('main', ipcRenderer);
     socket.open();
-    SocketEvents({$scope: $scope, socket: socket, $mdDialog: $mdDialog});
+    SocketEvents({$scope: $scope, socket: socket, $mdDialog: $mdDialog, $rootScope: $rootScope});
 
     $scope.toggleSideNav = function () {
         $mdSidenav('SideNav').toggle();
@@ -52,7 +52,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     $scope.CurrentVideoInfo = null;
 
     setInterval(function () {
-        if ($scope.VideoPlayer.duration){
+        if ($scope.VideoPlayer.duration) {
             $scope.PrettyDuration = extround($scope.VideoPlayer.duration / 60, 100).toString().replace('.', ':');
         } else {
             $scope.PrettyDuration = "0:00"
@@ -69,22 +69,66 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             CurrentVideoInfo: $scope.CurrentVideoInfo,
             PrettyDuration: $scope.PrettyDuration,
             percent: percentage.from($scope.VideoPlayer.currentTime, $scope.VideoPlayer.duration),
-            BufferPercent: $scope.CurrentBuffered
+            BufferPercent: $scope.CurrentBuffered,
+            CurrentPLPosition: $scope.CurrentPLPosition,
+            CurrentPL: $scope.CurrentPL
         });
+        if ($scope.VideoPlayer.ended && $scope.CurrentPLPosition != null){
+            log.info('Song finished. Got to the next one.');
+            //$rootScope.$emit('Play playlist', $scope.CurrentPL._id, $scope.CurrentPLPosition + 1);
+            if ($scope.CurrentPL.items.length - 1 > $scope.CurrentPLPosition){
+                $rootScope.$emit('Play', $scope.CurrentPL.items[$scope.CurrentPLPosition + 1].snippet.resourceId.videoId, $scope.CurrentPL.items[$scope.CurrentPLPosition + 1].snippet.position);
+            } else {
+                $rootScope.$emit('Play', $scope.CurrentPL.items[0].snippet.resourceId.videoId, $scope.CurrentPL.items[0].snippet.position);
+            }
+        }
     }, 100);
 
     $scope.VideoPlayer.onloadstart = () => {
-        socket.send('get video informations', {videoId: $scope.CurrentVideoId} ,(error, data) => {
+        socket.send('get video informations', {videoId: $scope.CurrentVideoId}, (error, data) => {
+            console.log(data);
             if (data.error) throw data.error;
             if (!data.error) $scope.CurrentVideoInfo = data;
         });
     };
 
+    $rootScope.$on('Skip current song', () => {
+        if ($scope.CurrentPLPosition != null){
+            log.info("Skip song");
+            // $rootScope.$emit('Play playlist', $scope.CurrentPL._id, $scope.CurrentPLPosition + 1);
+            if ($scope.CurrentPL.items.length - 1 > $scope.CurrentPLPosition){
+                $rootScope.$emit('Play', $scope.CurrentPL.items[$scope.CurrentPLPosition + 1].snippet.resourceId.videoId, $scope.CurrentPL.items[$scope.CurrentPLPosition + 1].snippet.position);
+            } else {
+                $rootScope.$emit('Play', $scope.CurrentPL.items[0].snippet.resourceId.videoId, $scope.CurrentPL.items[0].snippet.position);
+            }
+        }
+    });
+
+    $rootScope.$on('set volume', (ev, volume) => {
+        $scope.VideoPlayer.volume = volume;
+    });
+
+    $rootScope.$on('Last song in pl', () => {
+        if ($scope.CurrentPLPosition != null){
+            log.info("Go back in playlist");
+            // $rootScope.$emit('Play playlist', $scope.CurrentPL._id, $scope.CurrentPLPosition - 1);
+            if ($scope.CurrentPLPosition > 0){
+                $rootScope.$emit('Play', $scope.CurrentPL.items[$scope.CurrentPLPosition - 1].snippet.resourceId.videoId, $scope.CurrentPL.items[$scope.CurrentPLPosition - 1].snippet.position);
+            }
+        }
+    });
+
+    $scope.CurrentVideoInfo = {};
+    $scope.CurrentVideoInfo.snippet = {};
+    $scope.CurrentVideoInfo.snippet.thumbnails = {};
+    $scope.CurrentVideoInfo.snippet.thumbnails.maxres = {};
+    $scope.CurrentVideoInfo.snippet.thumbnails.maxres.url = "white.gif";
+
     $scope.VideoPlayer.addEventListener('progress', function () {
         const bufferedEnd = $scope.VideoPlayer.buffered.end($scope.VideoPlayer.buffered.length - 1);
-        const duration =  $scope.VideoPlayer.duration;
+        const duration = $scope.VideoPlayer.duration;
         if (duration > 0) {
-            $scope.CurrentBuffered =  ((bufferedEnd / duration)*100);
+            $scope.CurrentBuffered = ((bufferedEnd / duration) * 100);
         }
     });
 
@@ -92,16 +136,52 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         $scope.VideoPlayer.currentTime = position;
     });
 
-    $rootScope.$on('Play', (ev, videoid) => {
+    $rootScope.$on('Play', (ev, videoid, plPosition) => {
         $scope.CurrentVideoSrc = "http://localhost:2458/" + videoid;
         $scope.CurrentVideoId = videoid;
         $scope.CurrentTime = $scope.VideoPlayer.currentTime;
+        if (plPosition != null) {
+            $scope.CurrentPLPosition = plPosition;
+        } else {
+            $scope.CurrentPLPosition = null;
+            $scope.CurrentPL = null;
+            log.info("Remove playlist");
+        }
+        log.info(`Playlist position: `, plPosition);
         $scope.VideoPlayer.load();
         $scope.VideoPlayer.play();
+        $rootScope.$emit('!block buttons because loading');
+    });
+
+    $rootScope.$on('Play playlist', (ev, playlistid, songAt) => {
+        $rootScope.$emit('block buttons because loading');
+        socket.send('get playlist informations', {playlistId: playlistid}, (error, data) => {
+            if (error) throw error;
+            if (data) {
+                if (data.items.length > 0){
+                    let startIndex;
+                    for (let ItemIndex in data.items) {
+                        if (!data.items.hasOwnProperty(ItemIndex)) continue;
+                        if (data.items[ItemIndex].snippet.position == songAt?songAt:0) {
+                            startIndex = ItemIndex;
+                            break;
+                        }
+                    }
+                    if (!startIndex) {
+                        log.info("No position, set to 0", startIndex);
+                        startIndex = 0;
+                    }
+                    $scope.CurrentPL = data;
+                    console.log("xxxxxx: " , data.items[startIndex]);
+                    log.info(typeof data.items[startIndex].snippet.position);
+                    $rootScope.$emit('Play', data.items[startIndex].snippet.resourceId.videoId, data.items[startIndex].snippet.position);
+                }
+            }
+        });
     });
 
     $rootScope.$on('Trigger player', () => {
-        if ($scope.VideoPlayer.paused){
+        if ($scope.VideoPlayer.paused) {
             $scope.VideoPlayer.play();
         } else {
             $scope.VideoPlayer.pause();
@@ -236,7 +316,12 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
                 };
 
                 $scope.play = function (index) {
-                    $rootScope.$emit('Play', $scope.QueryResults[index].id.videoId);
+                    if ($scope.QueryResults[index].id.kind == "youtube#playlist"){
+                        $rootScope.$emit('Play playlist', $scope.QueryResults[index].id.playlistId, 0);
+                    } else {
+                        $rootScope.$emit('Play', $scope.QueryResults[index].id.videoId);
+                    }
+
                 }
             },
             resolve: {
@@ -256,7 +341,7 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
         });
 });
 
-function extround(zahl,n_stelle) {
+function extround(zahl, n_stelle) {
     zahl = (Math.round(zahl * n_stelle) / n_stelle);
     return zahl;
 }

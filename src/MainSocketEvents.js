@@ -174,4 +174,64 @@ module.exports = function (cfg) {
             }
         });
     });
+
+    socket.on('message:get playlist informations', (msg) => {
+        const data = msg.data();
+        db.findOne({_id: data.playlistId}, (err, doc) => {
+            if (doc){
+                msg.reply(doc);
+            } else {
+                let Params = {
+                    part: "snippet",
+                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
+                    playlistId: data.playlistId
+                };
+                let FirstURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
+                FirstURL.query = Params;
+                request(url.format(FirstURL), {
+                    json: true
+                }, (error, response, body) => {
+                    if (!error && response.statusCode == 200) {
+                        const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
+                        if (body.nextPageToken){
+                            let next = body.nextPageToken;
+                            let videos = [];
+                            videos = videos.concat(body.items);
+                            async.timesSeries(pageCount, (n, TimeCallback) => {
+                                let Params = {
+                                    part: "snippet",
+                                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
+                                    playlistId: data.playlistId,
+                                    pageToken: next
+                                };
+                                let PlayListRequestURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
+                                PlayListRequestURL.query = Params;
+                                request(url.format(PlayListRequestURL), {
+                                    json: true
+                                }, (error, response, xBody) => {
+                                    if (!error && response.statusCode == 200) {
+                                        if (xBody.nextPageToken){
+                                            next = xBody.nextPageToken;
+                                        }
+                                        videos = videos.concat(xBody.items);
+                                        TimeCallback();
+                                    } else {
+                                        TimeCallback();
+                                    }
+                                });
+                            }, () => {
+                                data.items = videos;
+                                data._id = data.playlistId;
+                                msg.reply(data);
+                            });
+                        } else {
+                            // Error
+                        }
+                    } else {
+                        // Error
+                    }
+                });
+            }
+        });
+    });
 };
