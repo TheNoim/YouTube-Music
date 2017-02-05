@@ -234,4 +234,50 @@ module.exports = function (cfg) {
             }
         });
     });
+
+    socket.on('message:get all playlists', (msg) => {
+        db.find({inLibrary: true}, (error, docs) => {
+            if (error) throw error;
+            if (!error) {
+                if (docs){
+                    let returnResults = [];
+                    for (let Index in docs){
+                        if (docs.hasOwnProperty(Index)){
+                            if (docs[Index].id){
+                                if (docs[Index].id.kind == "youtube#playlist"){
+                                    returnResults.push(docs[Index])
+                                }
+                            }
+                        }
+                    }
+                    msg.reply(returnResults);
+                } else {
+                    msg.reply([]);
+                }
+            }
+        });
+    });
+
+    socket.on('message:get all songs', (msg) => {
+        db.find({inLibrary: true}, (error, docs) => {
+            if (error) throw error;
+            if (!error) {
+                if (docs){
+                    let returnResults = [];
+                    for (let Index in docs){
+                        if (docs.hasOwnProperty(Index)){
+                            if (docs[Index].id){
+                                if (docs[Index].id.kind == "youtube#video"){
+                                    returnResults.push(docs[Index])
+                                }
+                            }
+                        }
+                    }
+                    msg.reply(returnResults);
+                } else {
+                    msg.reply([]);
+                }
+            }
+        });
+    });
 };

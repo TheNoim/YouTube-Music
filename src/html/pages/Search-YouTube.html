@@ -32,11 +32,11 @@
                 <h4>by {{ QueryResult.snippet.channelTitle }}</h4>
                 <p>{{ QueryResult.snippet.description }}</p>
             </div>
-            <md-button ng-click="play($index)" class="md-icon-button"
+            <md-button ng-click="play($index)" class="md-icon-button md-secondary"
                        style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
                 <md-icon>play_arrow</md-icon>
             </md-button>
-            <md-button class="md-icon-button" ng-disabled="!QueryResult.checked"
+            <md-button class="md-icon-button md-secondary" ng-disabled="!QueryResult.checked"
                        style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;"
                        ng-click="AddOrRemove(QueryResult, $index)">
                 <md-icon ng-bind="QueryResult.add_button">add</md-icon>

@@ -1,1 +1,47 @@
 <!DOCTYPE html>
+<div flex="100" layout-align="column" layout-padding>
+    <div layout-padding class="md-whiteframe-10dp">
+        <h3>Your saved YouTube playlist's</h3>
+    </div>
+    <md-list flex="100" ng-if="LibraryPlaylists.length > 0">
+        <md-list-item class="md-2-line" ng-repeat="LPlaylist in LibraryPlaylists">
+            <img ng-src="{{ LPlaylist.snippet.thumbnails.high.url }}" class="md-avatar"
+                 style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <div class="md-list-item-text">
+                <h3>{{ LPlaylist.snippet.title }}</h3>
+                <h4>by {{ LPlaylist.snippet.channelTitle }}</h4>
+            </div>
+            <md-button ng-click="GoToInPl($index)" class="md-icon-button md-secondary"
+                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <md-icon>info</md-icon>
+            </md-button>
+            <md-button ng-click="play($index, LibraryPlaylists)" class="md-icon-button md-secondary"
+                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <md-icon>play_arrow</md-icon>
+            </md-button>
+        </md-list-item>
+    </md-list>
+    <div flex="100" layout="row" layout-align="center center" ng-if="LibraryPlaylists.length == 0">
+        <p>You never saved any playlist</p>
+    </div>
+    <div layout-padding class="md-whiteframe-10dp">
+        <h3>Your saved song's</h3>
+    </div>
+    <md-list flex="100" ng-if="LibraryVideos.length > 0">
+        <md-list-item class="md-2-line" ng-repeat="LibraryVideo in LibraryVideos">
+            <img ng-src="{{ LibraryVideo.snippet.thumbnails.high.url }}" class="md-avatar"
+                 style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <div class="md-list-item-text">
+                <h3>{{ LibraryVideo.snippet.title }}</h3>
+                <h4>by {{ LibraryVideo.snippet.channelTitle }}</h4>
+            </div>
+            <md-button ng-click="play($index, LibraryVideos)" class="md-icon-button md-secondary"
+                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+                <md-icon>play_arrow</md-icon>
+            </md-button>
+        </md-list-item>
+    </md-list>
+    <div flex="100" layout="row" layout-align="center center" ng-if="LibraryVideos.length == 0">
+        <p>You never saved any song</p>
+    </div>
+</div>

@@ -283,6 +283,51 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
                 $title: function () {
                     return "My Library"
                 }
+            },
+            controller: function ($scope, $rootScope, $mdDialog) {
+                $scope.socket.send('get all playlists', (error, playlists) => {
+                    $scope.LibraryPlaylists = playlists;
+                    $scope.socket.send('get all songs', (error, videos) => {
+                        $scope.LibraryVideos = videos;
+                        console.log(`Videos: `, videos);
+                        console.log(`Playlists: `, playlists);
+                    });
+                });
+                $scope.play = function (index, where) {
+                    if (where[index].id.kind == "youtube#playlist"){
+                        $rootScope.$emit('Play playlist', where[index].id.playlistId, 0);
+                    } else {
+                        $rootScope.$emit('Play', where[index].id.videoId);
+                    }
+                };
+                $scope.GoToInPl = function (XIndex) {
+                    $scope.LibraryViewPlaylist = $scope.LibraryPlaylists[XIndex];
+                    console.log(`Open Playlist: `, $scope.LibraryViewPlaylist);
+                    $scope.safeApply();
+                    $mdDialog.show({
+                        fullscreen: true,
+                        scope: $scope,
+                        preserveScope: true,
+                        controller: function ($scope, $mdDialog, $rootScope) {
+                            $scope.safeApply();
+                            $scope.cancel = function () {
+                                $mdDialog.hide();
+                            };
+                            $scope.xplay = function (index) {
+                                $rootScope.$emit('Play playlist', $scope.LibraryViewPlaylist.id.playlistId, $scope.LibraryViewPlaylist.items[index].snippet.position);
+                                $mdDialog.hide();
+                            };
+                        },
+                        templateUrl: 'dialogs/GoToDialogLibrary.html'
+                    });
+                };
+            }
+        })
+        .state('library.playlist', {
+            url: '/library/:playlistId',
+            templateUrl: 'pages/Library.Playlist.html',
+            controller: function ($scope, $stateParams) {
+                $scope.ViewPlaylistId = $stateParams.playlistId;
             }
         })
         .state('search-youtube', {
