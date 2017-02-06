@@ -3,8 +3,10 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/www" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -17,5 +19,7 @@
     <orderEntry type="library" name="bower" level="project" />
     <orderEntry type="library" name="nedb-DefinitelyTyped" level="application" />
     <orderEntry type="library" name="fs-extra-DefinitelyTyped" level="application" />
+    <orderEntry type="library" name="gulp-DefinitelyTyped" level="application" />
+    <orderEntry type="library" name="gulp-json-editor-DefinitelyTyped" level="application" />
   </component>
 </module>

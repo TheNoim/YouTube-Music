@@ -61,7 +61,9 @@ function createWindow(db) {
     globalShortcut.register('MediaStop', () => {
         socket.send('PausePlay');
     });
-
+    globalShortcut.register('VolumeMute', () => {
+        socket.send('Trigger mute');
+    });
 
 }
 

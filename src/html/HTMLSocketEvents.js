@@ -43,4 +43,8 @@ module.exports = function (cfg) {
     socket.on('event:PausePlay', () => {
         $rootScope.$emit('Trigger player');
     });
+
+    socket.on('event:Trigger mute', () => {
+        $rootScope.$emit('Trigger mute');
+    });
 };
