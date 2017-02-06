@@ -51,12 +51,21 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     $scope.CurrentVideoSrc = "";
     $scope.CurrentVideoInfo = null;
 
+    $scope.AllDownloads = [];
+
     setInterval(function () {
         if ($scope.VideoPlayer.duration) {
             //$scope.PrettyDuration = extround($scope.VideoPlayer.duration / 60, 100).toString().replace('.', ':');
             $scope.PrettyDuration = Math.floor($scope.VideoPlayer.duration / 60) + ":" + Math.round($scope.VideoPlayer.duration % 60);
         } else {
             $scope.PrettyDuration = "0:00"
+        }
+        if ($scope.CurrentVideoInfo && $scope.CurrentVideoInfo.snippet && $scope.CurrentVideoInfo.snippet.thumbnails && $scope.CurrentVideoInfo.snippet.thumbnails.maxres){
+            if ($scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path){
+                $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path;
+            } else {
+                $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.url;
+            }
         }
         $rootScope.$emit('UpdatePlayerData', {
             currentTime: $scope.VideoPlayer.currentTime,
@@ -73,7 +82,8 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             BufferPercent: $scope.CurrentBuffered,
             CurrentPLPosition: $scope.CurrentPLPosition,
             CurrentPL: $scope.CurrentPL,
-            muted: $scope.VideoPlayer.muted
+            muted: $scope.VideoPlayer.muted,
+            Thumbnail: $scope.CurrentThumbnail
         });
         if ($scope.VideoPlayer.ended && $scope.CurrentPLPosition != null){
             log.info('Song finished. Got to the next one.');
@@ -276,6 +286,11 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         }
     };
 
+    $scope.downloadTest = function () {
+        log.info({kind: "youtube#vide", videoId: "9YvQHlcTM24"});
+        socket.send('Start download of', {kind: "youtube#vide", videoId: "9YvQHlcTM24"});
+    };
+
 });
 
 an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
@@ -349,6 +364,10 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
             controller: function ($scope, $stateParams) {
                 $scope.ViewPlaylistId = $stateParams.playlistId;
             }
+        })
+        .state('download', {
+            url: '/download',
+            templateUrl: 'pages/Download.html'
         })
         .state('search-youtube', {
             url: '/search/youtube',

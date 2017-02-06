@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<div layout-padding>
+    <h1>Current Downloads</h1>
+    <md-list ng-if="AllDownloads.length > 0">
+        <md-list-item ng-repeat="Download in AllDownloads" class="md-3-line nga-collapse nga-default">
+            <img ng-src="{{ Download.VideoData.snippet.thumbnails.maxres.url }}" class="md-avatar no-select" style="height: 90px; width: 90px;">
+            <div class="md-list-item-text" layout="column">
+                <h3>{{ Download.currentlyDoing }} - {{ Download.VideoData.snippet.title }}</h3>
+                <h4>by {{ Download.VideoData.snippet.channelTitle }}</h4>
+                <md-progress-linear md-mode="{{ Download.ProgressMode }}" value="{{ Download.state.percent * 100}}"></md-progress-linear>
+            </div>
+        </md-list-item>
+    </md-list>
+    <div layout-align="center center" layout="row" ng-if="AllDownloads.length == 0">
+        <p>No currently running downloads</p>
+    </div>
+</div>

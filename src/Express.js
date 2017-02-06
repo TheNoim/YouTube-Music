@@ -35,8 +35,9 @@ module.exports = function (db) {
                 if (doc == null) {
                     streamFile();
                 } else {
-                    if (doc.downloadFinished){
-                        res.sendFile(doc.path);
+                    if (doc.VideoPath){
+                        log.info(`${req.params.videoid} is downloaded. Load it. ${doc.VideoPath}`);
+                        res.sendFile(doc.VideoPath);
                     } else {
                         streamFile();
                     }

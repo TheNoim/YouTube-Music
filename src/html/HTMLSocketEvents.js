@@ -15,11 +15,11 @@ module.exports = function (cfg) {
     log.info("Setup error event");
     socket.on('event:ERROR', (Payload) => {
         let erroralert = $mdDialog.alert().ok('Close');
-        if (typeof Payload == "string"){
+        if (typeof Payload == "string") {
             erroralert.title('Error');
             erroralert.textContent(Payload);
             log.error(Payload);
-        } else if (typeof Payload == "object"){
+        } else if (typeof Payload == "object") {
             erroralert.title(Payload.title ? Payload.title : "Error");
             erroralert.textContent(Payload.error);
             log.error(Payload.error);
@@ -46,5 +46,59 @@ module.exports = function (cfg) {
 
     socket.on('event:Trigger mute', () => {
         $rootScope.$emit('Trigger mute');
+    });
+
+    socket.on('event:Add download', (Payload) => {
+        let add = {
+            videoId: Payload.videoId,
+            VideoData: Payload.VideoData,
+            ProgressMode: Payload.ProgressMode,
+            currentlyDoing: "Waiting"
+        };
+        if (add.VideoData && add.VideoData.snippet && add.VideoData.snippet.thumbnails){
+            if (!add.VideoData.snippet.thumbnails.maxres) {
+                if (add.VideoData.snippet.thumbnails.high){
+                    add.VideoData.snippet.thumbnails.maxres = add.VideoData.snippet.thumbnails.high;
+                } else if (add.VideoData.snippet.thumbnails.medium){
+                    add.VideoData.snippet.thumbnails.maxres = add.VideoData.snippet.thumbnails.medium;
+                } else {
+                    add.VideoData.snippet.thumbnails.maxres = add.VideoData.snippet.thumbnails.default;
+                }
+            }
+        }
+        $scope.AllDownloads.push(add);
+        $scope.safeApply();
+    });
+
+    socket.on('event:Download update', (Payload) => {
+        for (let DownloadIndex in $scope.AllDownloads){
+            if ($scope.AllDownloads.hasOwnProperty(DownloadIndex)){
+                if ($scope.AllDownloads[DownloadIndex].videoId == Payload.videoId){
+                    if (Payload.ProgressMode) {
+                        $scope.AllDownloads[DownloadIndex].ProgressMode = Payload.ProgressMode;
+                    }
+                    if (Payload.state){
+                        $scope.AllDownloads[DownloadIndex].state = Payload.state;
+                    }
+                    if (Payload.currentlyDoing){
+                        $scope.AllDownloads[DownloadIndex].currentlyDoing = Payload.currentlyDoing;
+                    }
+                    break;
+                }
+            }
+        }
+        $scope.safeApply();
+    });
+
+    socket.on('event:Remove download', (Payload) => {
+        for (let DownloadIndex in $scope.AllDownloads) {
+            if ($scope.AllDownloads.hasOwnProperty(DownloadIndex)) {
+                if ($scope.AllDownloads[DownloadIndex].videoId == Payload.videoId){
+                    $scope.AllDownloads.splice(DownloadIndex, 1);
+                    break;
+                }
+            }
+        }
+        $scope.safeApply();
     });
 };

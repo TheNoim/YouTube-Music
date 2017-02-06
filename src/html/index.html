@@ -36,6 +36,9 @@
             <md-list-item ng-click="toggleSideNav()" ui-sref="search-youtube">
                 <span>Search on YT</span>
             </md-list-item>
+            <md-list-item ng-click="toggleSideNav()" ui-sref="download">
+                <span>Downloads</span>
+            </md-list-item>
         </md-list>
     </md-sidenav>
     <md-toolbar flex="nogrow" md-whiteframe="10" class="">
@@ -45,6 +48,7 @@
             </md-button>
             <span ng-bind="($title || 'Home')"></span>
             <span flex></span>
+            <md-button ng-click="downloadTest()">Download Test</md-button>
             <md-button ng-click="PlayTest()">Play Test</md-button>
             <md-autocomplete md-input-id="SearchField" placeholder="Search" md-search-text-change="DoQuery(textquery)"
                              ng-if="search" class="nga-slide-right nga-fast nga-stagger-fast" flex="30"

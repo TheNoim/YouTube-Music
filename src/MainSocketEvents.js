@@ -6,6 +6,7 @@ const request = require('request');
 const async = require('async');
 const url = require('url');
 const fs = require('fs');
+const DL = require('./DownloadManager');
 
 let downloadTaskList = {};
 
@@ -20,6 +21,7 @@ module.exports = function (cfg) {
     const socket = cfg.socket;
     const window = cfg.mainWindow;
     const db = cfg.db;
+    const DownloadManager = new DL(db, socket);
 
     socket.on('message:in library ?', (msg) => {
         const data = msg.data();
@@ -336,34 +338,19 @@ module.exports = function (cfg) {
         });
     });
 
-    socket.on('event:download', (msg) => {
-        const data = msg.data();
-        if (data.kind == "youtube#playlist"){
-            db.findOne({_id: data.playlistId}, (error, Playlist) => {
-                if (Playlist){
-                    db.update({_id: data.playlistId}, {downloading: true}, () => {
-                        async.each(Playlist.items, (video, callback) => {
-                            downloadTask.push({videoId: video.snippet.resourceId.videoId});
-                            callback();
-                        }, () => {
-
-                        });
-                    });
-                } else {
-                    msg.reply();
-                }
-            });
+    socket.on('event:Start download of', (msg) => {
+        log.info(`Start download`, msg);
+        let add = {
+            kind: msg.kind
+        };
+        if (msg.videoId){
+            add.videoId = msg.videoId;
         }
+        if (msg.playlistId){
+            add.playlistId = msg.playlistId;
+        }
+        log.info(msg);
+        DownloadManager.this().task.push(add);
     });
 
 };
-
-function checkIfPlaylistDownloadFinished(playlistId, callback) {
-    db.findOne({_id: playlistId}, (error, playlist) => {
-        if (playlist.downloading == true){
-
-        } else {
-            async.each(Playlist.item)
-        }
-    });
-}
