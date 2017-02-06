@@ -23,3 +23,7 @@ bower install
 You can start it now with:  
 `electron .`
 
+## But what when I just want to use this awesome Player without typing these cryptographic commands?
+
+Just take a look to the releases Page: [releases](https://github.com/TheNoim/YouTube-Music/releases "Releases Page")
+There you should find an executable file for your OS!
