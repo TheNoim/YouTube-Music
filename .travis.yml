@@ -29,4 +29,4 @@ install:
 script:
   - travis_wait 30 ./node_modules/.bin/gulp
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 ./node_modules/.bin/build -m --x64 --publish="always" --draft; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 ./node_modules/.bin/build -wl --x64 --publish="always" --draft; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 ./node_modules/.bin/build -wl --x64 --ia32 --publish="always" --draft; fi
