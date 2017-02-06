@@ -2,12 +2,10 @@
 <div layout="row" layout-align="center center" flex="100" style="height: 100%">
     <div layout="column" flex="100" layout-align="center center" style="height: 100%">
         <div layout="column" flex>
-            <img src="{{ Data.CurrentVideoInfo.snippet.thumbnails.maxres.url }}" style="width: auto;
-    height: 100%;user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
-
+            <img src="{{Data.CurrentVideoInfo.snippet.thumbnails.maxres.url}}" class="no-select" style="width: auto;height: 100%;">
         </div>
-        <md-toolbar flex="initial" style="max-height: 20%;user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
-            <md-progress-linear class="md-accent md-hue-3 md-whiteframe-8dp" md-mode="buffer" value="{{ Data.percent }}"
+        <md-toolbar flex="initial" style="max-height: 20%;" class="no-select">
+            <md-progress-linear class="md-accent md-hue-3 no-select" md-mode="buffer" value="{{ Data.percent }}"
                                 md-buffer-value="{{ Data.BufferPercent }}" id="player_progress">
             </md-progress-linear>
             <div layout="row" layout-padding layout-align="space-between center">
@@ -29,8 +27,14 @@
                     </md-button>
                 </div>
                 <div layout="row">
-                    <md-slider ng-model="volume" min="0" max="1" step="0.01"></md-slider>
-                    <md-button ng-click="GoToInPl()" ng-if="Data.CurrentPLPosition != null">Go to</md-button>
+                    <md-button class="md-icon-button" ng-click="triggerMute()">
+                        <md-icon ng-if="Data.muted">volume_off</md-icon>
+                        <md-icon ng-if="!Data.muted">volume_up</md-icon>
+                    </md-button>
+                    <md-slider-container>
+                        <md-slider md-discrete ng-model="volume" min="0" max="1" step="0.01"></md-slider>
+                    </md-slider-container>
+                    <md-button ng-click="GoToInPl()" ng-disabled="Data.CurrentPLPosition == null">Go to</md-button>
                 </div>
             </div>
         </md-toolbar>

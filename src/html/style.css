@@ -1,3 +1,6 @@
 xx.md-progress-linear {
     background-color: transparent !important;
 }
+.no-select {
+    user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;
+}

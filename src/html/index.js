@@ -53,7 +53,8 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
 
     setInterval(function () {
         if ($scope.VideoPlayer.duration) {
-            $scope.PrettyDuration = extround($scope.VideoPlayer.duration / 60, 100).toString().replace('.', ':');
+            //$scope.PrettyDuration = extround($scope.VideoPlayer.duration / 60, 100).toString().replace('.', ':');
+            $scope.PrettyDuration = Math.floor($scope.VideoPlayer.duration / 60) + ":" + Math.round($scope.VideoPlayer.duration % 60);
         } else {
             $scope.PrettyDuration = "0:00"
         }
@@ -71,7 +72,8 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             percent: percentage.from($scope.VideoPlayer.currentTime, $scope.VideoPlayer.duration),
             BufferPercent: $scope.CurrentBuffered,
             CurrentPLPosition: $scope.CurrentPLPosition,
-            CurrentPL: $scope.CurrentPL
+            CurrentPL: $scope.CurrentPL,
+            muted: $scope.VideoPlayer.muted
         });
         if ($scope.VideoPlayer.ended && $scope.CurrentPLPosition != null){
             log.info('Song finished. Got to the next one.');
@@ -88,9 +90,25 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         socket.send('get video informations', {videoId: $scope.CurrentVideoId}, (error, data) => {
             console.log(data);
             if (data.error) throw data.error;
-            if (!data.error) $scope.CurrentVideoInfo = data;
+            if (!data.error) {
+                $scope.CurrentVideoInfo = data;
+                if (!$scope.CurrentVideoInfo.snippet.thumbnails.maxres){
+                    if ($scope.CurrentVideoInfo.snippet.thumbnails.high){
+                        $scope.CurrentVideoInfo.snippet.thumbnails.maxres = $scope.CurrentVideoInfo.snippet.thumbnails.high;
+                    } else if ($scope.CurrentVideoInfo.snippet.thumbnails.medium) {
+                        $scope.CurrentVideoInfo.snippet.thumbnails.maxres = $scope.CurrentVideoInfo.snippet.thumbnails.medium;
+                    } else {
+                        $scope.CurrentVideoInfo.snippet.thumbnails.maxres = $scope.CurrentVideoInfo.snippet.thumbnails.default;
+                    }
+                }
+            }
+
         });
     };
+
+    $rootScope.$on('Trigger mute', () => {
+        $scope.VideoPlayer.muted = !$scope.VideoPlayer.muted;
+    });
 
     $rootScope.$on('Skip current song', () => {
         if ($scope.CurrentPLPosition != null){
@@ -148,9 +166,11 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             log.info("Remove playlist");
         }
         log.info(`Playlist position: `, plPosition);
-        $scope.VideoPlayer.load();
-        $scope.VideoPlayer.play();
-        $rootScope.$emit('!block buttons because loading');
+        $scope.safeApply(() => {
+            $scope.VideoPlayer.load();
+            $scope.VideoPlayer.play();
+            $rootScope.$emit('!block buttons because loading');
+        });
     });
 
     $rootScope.$on('Play playlist', (ev, playlistid, songAt) => {

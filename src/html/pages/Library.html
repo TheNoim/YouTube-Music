@@ -5,18 +5,16 @@
     </div>
     <md-list flex="100" ng-if="LibraryPlaylists.length > 0">
         <md-list-item class="md-2-line" ng-repeat="LPlaylist in LibraryPlaylists">
-            <img ng-src="{{ LPlaylist.snippet.thumbnails.high.url }}" class="md-avatar"
-                 style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <img ng-src="{{ LPlaylist.snippet.thumbnails.high.url }}" class="md-avatar no-select"
+                 style="height: 90px; width: 90px;">
             <div class="md-list-item-text">
                 <h3>{{ LPlaylist.snippet.title }}</h3>
                 <h4>by {{ LPlaylist.snippet.channelTitle }}</h4>
             </div>
-            <md-button ng-click="GoToInPl($index)" class="md-icon-button md-secondary"
-                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <md-button ng-click="GoToInPl($index)" class="md-icon-button md-secondary no-select">
                 <md-icon>info</md-icon>
             </md-button>
-            <md-button ng-click="play($index, LibraryPlaylists)" class="md-icon-button md-secondary"
-                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <md-button ng-click="play($index, LibraryPlaylists)" class="md-icon-button md-secondary no-select">
                 <md-icon>play_arrow</md-icon>
             </md-button>
         </md-list-item>
@@ -29,14 +27,12 @@
     </div>
     <md-list flex="100" ng-if="LibraryVideos.length > 0">
         <md-list-item class="md-2-line" ng-repeat="LibraryVideo in LibraryVideos">
-            <img ng-src="{{ LibraryVideo.snippet.thumbnails.high.url }}" class="md-avatar"
-                 style="height: 90px; width: 90px; user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <img ng-src="{{ LibraryVideo.snippet.thumbnails.high.url }}" class="md-avatar no-select" style="height: 90px; width: 90px;">
             <div class="md-list-item-text">
                 <h3>{{ LibraryVideo.snippet.title }}</h3>
                 <h4>by {{ LibraryVideo.snippet.channelTitle }}</h4>
             </div>
-            <md-button ng-click="play($index, LibraryVideos)" class="md-icon-button md-secondary"
-                       style=" user-select: none;-moz-user-select: none;-khtml-user-select: none;-webkit-user-select: none;-o-user-select: none;">
+            <md-button ng-click="play($index, LibraryVideos)" class="md-icon-button md-secondary no-select">
                 <md-icon>play_arrow</md-icon>
             </md-button>
         </md-list-item>
