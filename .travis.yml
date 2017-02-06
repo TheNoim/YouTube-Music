@@ -1,0 +1,32 @@
+language: node_js
+sudo: required
+dist: trusty
+cache:
+  directories:
+    - $HOME/.cache/bower
+node_js:
+  - "7.4.0"
+osx_image: xcode8.2
+os:
+  - osx
+  - linux
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar graphicsmagick xz rpm yarn; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo dpkg --add-architecture i386; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository ppa:wine/wine-builds -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y icnsutils graphicsmagick xz-utils yarn; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install winehq-devel winetricks -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install mono-complete ca-certificates-mono -y; fi
+  - npm install bower -g
+install:
+  - yarn
+  - travis_wait 30 bower install
+script:
+  - travis_wait 30 ./node_modules/.bin/gulp
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then travis_wait 30 ./node_modules/.bin/build -m --x64 --publish="always" --draft; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis_wait 30 ./node_modules/.bin/build -wl --x64 --publish="always" --draft; fi
