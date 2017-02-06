@@ -21,7 +21,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y icnsutils graphicsmagick xz-utils yarn; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install winehq-devel winetricks -y; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install mono-complete ca-certificates-mono -y; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install mono-complete ca-certificates-mono gcc-multilib g++-multilib -y; fi
   - npm install bower -g
 install:
   - yarn
