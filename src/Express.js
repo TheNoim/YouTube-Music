@@ -10,6 +10,7 @@ module.exports = function (db) {
     const ex = express();
     const endMw = require('express-end');
     const log = require('./Logger')();
+    const fs = require('fs');
 
     ex.use(endMw);
 
@@ -35,9 +36,15 @@ module.exports = function (db) {
                 if (doc == null) {
                     streamFile();
                 } else {
-                    if (doc.VideoPath){
-                        log.info(`${req.params.videoid} is downloaded. Load it. ${doc.VideoPath}`);
-                        res.sendFile(doc.VideoPath);
+                    if (doc.VideoPath && doc.VideoDownloaded){
+                        fs.access(doc.VideoPath, fs.constants.R_OK ,(err) => {
+                            if (!err){
+                                log.info(`${req.params.videoid} is downloaded. Load it. ${doc.VideoPath}`);
+                                res.sendFile(doc.VideoPath);
+                            } else {
+                                streamFile();
+                            }
+                        });
                     } else {
                         streamFile();
                     }

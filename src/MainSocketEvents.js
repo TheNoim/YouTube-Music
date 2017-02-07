@@ -5,8 +5,10 @@ const log = require('./Logger')();
 const request = require('request');
 const async = require('async');
 const url = require('url');
-const fs = require('fs');
+const fs = require('fs-extra');
 const DL = require('./DownloadManager');
+const path = require('path');
+const {app} = require('electron');
 
 let downloadTaskList = {};
 
@@ -31,7 +33,7 @@ module.exports = function (cfg) {
                     _id: data.id.playlistId
                 }, (err, playlist) => {
                     if (err) throw err;
-                    if (playlist){
+                    if (playlist && playlist.inLibrary){
                         msg.reply({
                             inLibrary: true,
                             result: playlist
@@ -47,7 +49,7 @@ module.exports = function (cfg) {
                     _id: data.id.videoId
                 }, (err, video) => {
                     if (err) throw err;
-                    if (video){
+                    if (video && video.inLibrary){
                         msg.reply({
                             inLibrary: true,
                             result: video
@@ -137,7 +139,7 @@ module.exports = function (cfg) {
                     _id: data.id.videoId
                 }, (error, doc) => {
                     if (doc){
-                        db.update({_id: data.id.videoId}, {inLibrary: true}, () => {
+                        db.update({_id: data.id.videoId},{$set: {inLibrary: true}}, (error, newDoc) => {
                             log.info(`Video added to db. New data: `, newDoc);
                             msg.reply({});
                             socket.send('update library');
@@ -179,9 +181,16 @@ module.exports = function (cfg) {
             db.findOne({_id: id}, (error, doc) => {
                 if (doc){
                     if (data.id.kind == "youtube#video"){
-                        if (doc.downloadFinished){
-                            fs.unlink(doc.path, () => {
-                                remove();
+                        if (doc.VideoDownloaded){
+                            const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + data.id.videoId + '/');
+                            fs.access(DownloadPath, fs.constants.W_OK, (err) => {
+                                if (!err){
+                                    fs.remove(DownloadPath, (err) => {
+                                        remove();
+                                    });
+                                } else {
+                                    remove();
+                                }
                             });
                         } else {
                             remove();
@@ -190,9 +199,16 @@ module.exports = function (cfg) {
                         async.eachSeries(data.items, (Video, EachCallback) => {
                             db.findOne({_id: Video.snippet.resourceId.videoId}, (error, vResult) => {
                                 if (vResult){
-                                    if (vResult.downloadFinished){
-                                        fs.unlink(vResult.path, () => {
-                                            EachCallback();
+                                    if (vResult.VideoDownloaded){
+                                        const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + vResult.id.videoId + '/');
+                                        fs.access(DownloadPath, fs.constants.W_OK, (err) => {
+                                            if (!err){
+                                                fs.remove(DownloadPath, (err) => {
+                                                    EachCallback();
+                                                });
+                                            } else {
+                                                EachCallback();
+                                            }
                                         });
                                     } else {
                                         EachCallback();

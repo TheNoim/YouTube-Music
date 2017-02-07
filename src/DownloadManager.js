@@ -10,12 +10,25 @@ const {EventEmitter} = require('events');
 const request = require('request');
 const url = require('url');
 const progress = require('request-progress');
+const log = require('./Logger')();
 
 function DownloadManager(db, socket) {
     DownloadManager.prototype.this().db = db;
     DownloadManager.prototype.this().socket = socket;
+    DownloadManager.prototype._markEveryDownloadingFileAsUnfinishedOnStartUp((ids) => {
+        async.each(ids, (id, ECallback) => {
+            DownloadManager.prototype.task.push({
+                "kind": "youtube#video",
+                "videoId": id
+            });
+            ECallback();
+        }, () => {
+            log.info(`Re-added every unfinished download.`);
+        });
+    });
+
     DownloadManager.prototype.task = async.queue((Payload, QCallback) => {
-        if (Payload.kind == "youtube#playlist"){
+        if (Payload.kind == "youtube#playlist") {
             DownloadManager.prototype._getPlaylistInformations(Payload.playlistId, (Data) => {
                 async.each(Data.items, (Item, ECallback) => {
                     DownloadManager.prototype.task.push(Item.snippet.resourceId);
@@ -24,28 +37,40 @@ function DownloadManager(db, socket) {
                     QCallback();
                 })
             });
-        } else {
+        } else if (Payload.kind == "youtube#video") {
             DownloadManager.prototype._isAlreadyDownloading(Payload.videoId, (isDownloading) => {
-                if (!isDownloading){
-                    DownloadManager.prototype._getVideoInformations(Payload.videoId, (VideoData) => {
-                        DownloadManager.prototype.this().socket.send('Add download', {
-                            videoId: Payload.videoId,
-                            VideoData: VideoData,
-                            ProgressMode: "indeterminate"
-                        });
-                        DownloadManager.prototype._downloadVideo(Payload.videoId, () => {
-                            DownloadManager.prototype._downloadThumbnails(Payload.videoId, () => {
-                                DownloadManager.prototype.this().socket.send('Remove download', {
-                                    videoId: Payload.videoId
+                if (!isDownloading) {
+                    DownloadManager.prototype._isAlreadyDownloaded(Payload.videoId, (isDownloaded) => {
+                        if (!isDownloaded){
+                            DownloadManager.prototype._getVideoInformations(Payload.videoId, (VideoData) => {
+                                DownloadManager.prototype.this().socket.send('Add download', {
+                                    videoId: Payload.videoId,
+                                    VideoData: VideoData,
+                                    ProgressMode: "indeterminate"
                                 });
-                                QCallback();
+                                DownloadManager.prototype._downloadVideo(Payload.videoId, () => {
+                                    DownloadManager.prototype._downloadThumbnails(Payload.videoId, () => {
+                                        DownloadManager.prototype.this().socket.send('Remove download', {
+                                            videoId: Payload.videoId
+                                        });
+                                        DownloadManager.prototype._markVideoAsDownloaded(Payload.videoId, () => {
+                                            QCallback();
+                                        });
+                                    });
+                                });
                             });
-                        });
+                        } else {
+                            log.warn(`${Payload.videoId} is already downloaded.`);
+                            QCallback();
+                        }
                     });
                 } else {
+                    log.warn(`${Payload.videoId} is already downloading.`);
                     QCallback();
                 }
             });
+        } else {
+            QCallback();
         }
     }, 3);
 }
@@ -79,10 +104,10 @@ DownloadManager.prototype._inDB = function (id, FCallback) {
 DownloadManager.prototype._isAlreadyDownloading = function (videoId, FCallback) {
     DownloadManager.prototype.this().db.findOne({_id: videoId}, (error, doc) => {
         if (error) throw error;
-        if (!doc){
+        if (!doc) {
             FCallback(false);
         } else {
-            if (doc.VideoDownloading){
+            if (doc.VideoDownloading) {
                 FCallback(true);
             } else if (doc.ThumbnailsDownloading) {
                 FCallback(true);
@@ -99,10 +124,69 @@ DownloadManager.prototype._isAlreadyDownloading = function (videoId, FCallback) 
  * @param FCallback
  * @private
  */
+DownloadManager.prototype._isAlreadyDownloaded = function (videoId, FCallback) {
+    DownloadManager.prototype.this().db.findOne({_id: videoId}, (error, doc) => {
+        if (error) throw error;
+        if (!doc) {
+            FCallback(false);
+        } else {
+            if (doc.VideoDownloaded) {
+                FCallback(true);
+            } else {
+                FCallback(false);
+            }
+        }
+    });
+};
+
+/**
+ *
+ * @param videoId
+ * @param FCallback
+ * @private
+ */
+DownloadManager.prototype._markVideoAsDownloaded = function (videoId, FCallback) {
+    DownloadManager.prototype._inDB(videoId, (inDB) => {
+        if (inDB){
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {VideoDownloaded: true}}, {}, (error) => {
+                if (error) throw error;
+                FCallback();
+            });
+        } else {
+            FCallback();
+        }
+    });
+};
+
+/**
+ *
+ * @param videoId
+ * @param FCallback
+ * @private
+ */
+DownloadManager.prototype._markVideoAsNotDownloaded = function (videoId, FCallback) {
+    DownloadManager.prototype._inDB(videoId, (inDB) => {
+        if (inDB){
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {VideoDownloaded: false}}, {}, (error) => {
+                if (error) throw error;
+                FCallback();
+            });
+        } else {
+            FCallback();
+        }
+    });
+};
+
+/**
+ *
+ * @param videoId
+ * @param FCallback
+ * @private
+ */
 DownloadManager.prototype._markAsDownloading = function (videoId, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDb) => {
         if (inDb) {
-            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {VideoDownloading: true}}, (error) => {
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {VideoDownloading: true}}, {}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
@@ -129,11 +213,7 @@ DownloadManager.prototype._markAsDownloading = function (videoId, FCallback) {
 DownloadManager.prototype._markAsNotDownloading = function (videoId, VideoPath, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDb) => {
         if (inDb) {
-            let update = {VideoDownloading: false};
-            if (VideoPath) {
-                update.VideoPath = VideoPath;
-            }
-            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: update}, (error) => {
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {VideoDownloading: false, VideoPath: VideoPath}}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
@@ -162,7 +242,7 @@ DownloadManager.prototype._markAsNotDownloading = function (videoId, VideoPath, 
 DownloadManager.prototype._markTAsDownloading = function (videoId, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDb) => {
         if (inDb) {
-            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {ThumbnailsDownloading: true}}, (error) => {
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {ThumbnailsDownloading: true}},{}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
@@ -188,8 +268,7 @@ DownloadManager.prototype._markTAsDownloading = function (videoId, FCallback) {
 DownloadManager.prototype._markTAsNotDownloading = function (videoId, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDb) => {
         if (inDb) {
-            let update = {ThumbnailsDownloading: false};
-            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: update}, (error) => {
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: {ThumbnailsDownloading: false}},{}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
@@ -218,7 +297,7 @@ DownloadManager.prototype._downloadVideo = function (videoId, FCallback) {
         fs.ensureDir(path.join(app.getPath('userData'), 'temp/' + videoId + '/'), (error) => {
             if (error) throw error;
             let abort = false;
-            yt.download(path.join(app.getPath('userData'), 'temp/' + videoId + '/'), videoId, true, (filename) => {
+            const dl = yt.download(path.join(app.getPath('userData'), 'temp/' + videoId + '/'), videoId, true, (filename) => {
                 if (!abort) {
                     DownloadManager.prototype._moveFile(videoId, filename, FCallback);
                 } else {
@@ -236,7 +315,7 @@ DownloadManager.prototype._downloadVideo = function (videoId, FCallback) {
                     });
                 }
             });
-            yt.on('progress', (state) => {
+            dl.on('progress', (state) => {
                 DownloadManager.prototype.this().socket.send('Download update', {
                     videoId: videoId,
                     state: state,
@@ -274,25 +353,24 @@ DownloadManager.prototype._downloadThumbnails = function (videoId, FCallback) {
                 if (Data.snippet.thumbnails.hasOwnProperty(DataIndex)) {
                     Thumbnails.push({
                         "kind": Data.snippet.thumbnails[DataIndex],
+                        "res": DataIndex,
                         "url": Data.snippet.thumbnails[DataIndex].url
                     });
                 }
             }
             EachAbort = false;
             async.each(Thumbnails, (Thumbnail, ECallback) => {
-                if (EachAbort){
+                if (EachAbort) {
                     ECallback();
                     return;
                 }
                 DownloadManager.prototype.this().socket.send('Download update', {
                     videoId: videoId,
                     ProgressMode: "determinate",
-                    currentlyDoing: "Download thumbnail: " + Thumbnail.kind
+                    currentlyDoing: "Download thumbnail: " + Thumbnail.res
                 });
+                log.info(`Download Thumbnail ${Thumbnail.res}`);
                 const DestPath = path.join(app.getPath('userData'), 'downloads/' + videoId + '/');
-                const ThumbnailURL = url.parse(Thumbnail.kind.url);
-                const Extension = path.extname(ThumbnailURL.path);
-                console.log(Thumbnail);
                 const ThumbnailFileName = path.basename(Thumbnail.kind.url);
                 fs.ensureDir(DestPath, () => {
                     const THDownloadRequest = progress(request.get(Thumbnail.url));
@@ -302,7 +380,7 @@ DownloadManager.prototype._downloadThumbnails = function (videoId, FCallback) {
                             videoId: videoId,
                             state: state,
                             ProgressMode: "determinate",
-                            currentlyDoing: "Download thumbnail: " + Thumbnail.kind
+                            currentlyDoing: "Download thumbnail: " + Thumbnail.res
                         });
                     });
                     THDownloadRequest.once('end', () => {
@@ -310,15 +388,15 @@ DownloadManager.prototype._downloadThumbnails = function (videoId, FCallback) {
                             DownloadManager.prototype.this().socket.send('Download update', {
                                 videoId: videoId,
                                 ProgressMode: "indeterminate",
-                                currentlyDoing: "Download of thumbnail " + Thumbnail.kind + " finished"
+                                currentlyDoing: "Download of thumbnail " + Thumbnail.res + " finished"
                             });
-                            DownloadManager.prototype._markThumbnailAsDownloaded(videoId, Thumbnail.kind, DestPath, () => {
+                            DownloadManager.prototype._markThumbnailAsDownloaded(videoId, Thumbnail.res, path.join(DestPath, ThumbnailFileName), () => {
                                 ECallback();
                             });
                         } else {
                             fs.remove(path.join(DestPath, ThumbnailFileName), (error) => {
                                 if (error) throw error;
-                                DownloadManager.prototype._markThumbnailAsNotDownloaded(videoId, Thumbnail.kind, () => {
+                                DownloadManager.prototype._markThumbnailAsNotDownloaded(videoId, Thumbnail.res, () => {
                                     ECallback();
                                 });
                             });
@@ -333,11 +411,10 @@ DownloadManager.prototype._downloadThumbnails = function (videoId, FCallback) {
                         EachAbort = true;
                         THDownloadRequest.abort();
                     });
-                    console.log(path.join(DestPath, ThumbnailFileName));
                     THDownloadRequest.pipe(fs.createWriteStream(path.join(DestPath, ThumbnailFileName)));
                 });
             }, () => {
-                if (EachAbort){
+                if (EachAbort) {
                     async.each(Thumbnails, (Thumbnail, ECallback) => {
                         db.findOne({_id: videoId}, (error, doc) => {
                             if (error) throw error;
@@ -384,20 +461,21 @@ DownloadManager.prototype._downloadThumbnails = function (videoId, FCallback) {
 DownloadManager.prototype._markThumbnailAsDownloaded = function (videoId, kind, path, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDB) => {
         if (inDB) {
-            let update = {snippet: {thumbnails: {}}};
-            update.snippet.thumbnails[kind] = {};
-            update.snippet.thumbnails[kind].Downloaded = true;
-            update.snippet.thumbnails[kind].Path = path;
-            DownloadManager.prototype.this().db.update({_id: videoId},{$set:  update}, (error) => {
+            let update =  {};
+            update['snippet.thumbnails.' + kind] = {
+                Downloaded: true,
+                Path: path
+            };
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: update},{}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
         } else {
             DownloadManager.prototype._getVideoInformations(videoId, (Payload) => {
                 Payload._id = videoId;
-                if (Payload.snippet){
-                    if (Payload.snippet.thumbnails){
-                        if (!Payload.snippet.thumbnails[kind]){
+                if (Payload.snippet) {
+                    if (Payload.snippet.thumbnails) {
+                        if (!Payload.snippet.thumbnails[kind]) {
                             Payload.snippet.thumbnails[kind] = {};
                             Payload.snippet.thumbnails[kind].Downloaded = true;
                             Payload.snippet.thumbnails[kind].Path = path;
@@ -423,19 +501,21 @@ DownloadManager.prototype._markThumbnailAsDownloaded = function (videoId, kind, 
 DownloadManager.prototype._markThumbnailAsNotDownloaded = function (videoId, kind, FCallback) {
     DownloadManager.prototype._inDB(videoId, (inDB) => {
         if (inDB) {
-            let update = {snippet: {thumbnails: {}}};
-            update.snippet.thumbnails[kind].Downloaded = false;
-            update.snippet.thumbnails[kind].Path = null;
-            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: update}, (error) => {
+            let update = {};
+            update[`snippet.thumbnails.${kind}`] = {
+                Downloaded: false,
+                Path: null
+            };
+            DownloadManager.prototype.this().db.update({_id: videoId}, {$set: update},{}, (error) => {
                 if (error) throw error;
                 FCallback();
             });
         } else {
             DownloadManager.prototype._getVideoInformations(videoId, (Payload) => {
                 Payload._id = videoId;
-                if (Payload.snippet){
-                    if (Payload.snippet.thumbnails){
-                        if (!Payload.snippet.thumbnails[kind]){
+                if (Payload.snippet) {
+                    if (Payload.snippet.thumbnails) {
+                        if (!Payload.snippet.thumbnails[kind]) {
                             Payload.snippet.thumbnails[kind] = {};
                             Payload.snippet.thumbnails[kind].Downloaded = false;
                             Payload.snippet.thumbnails[kind].Path = null;
@@ -458,12 +538,19 @@ DownloadManager.prototype._markThumbnailAsNotDownloaded = function (videoId, kin
  * @private
  */
 DownloadManager.prototype._getVideoInformations = function (videoId, FCallback) {
-    request(`https://www.googleapis.com/youtube/v3/videos?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&id=${videoId}`, {json: true}, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
-            FCallback(body.items[0]);
-        } else {
-            throw error;
-        }
+    async.retry(5, (RCallback) => {
+        async.timeout((TCallback) => {
+            request(`https://www.googleapis.com/youtube/v3/videos?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&id=${videoId}`, {json: true}, (error, response, body) => {
+                if (!error && response.statusCode == 200) {
+                    TCallback(null, body.items[0]);
+                } else {
+                    TCallback(error || response.statusCode);
+                }
+            });
+        }, 20 * 1000)(RCallback);
+    }, (error, data) => {
+        if (error) throw error;
+        FCallback(data);
     });
 };
 
@@ -474,11 +561,37 @@ DownloadManager.prototype._getVideoInformations = function (videoId, FCallback) 
  * @private
  */
 DownloadManager.prototype._getPlaylistInformations = function (playlistId, FCallback) {
-    request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}`, {json: true}, (error, response, body) => {
+    log.info(`PlaylistId: `, playlistId);
+    request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}&maxResults=50`, {json: true}, (error, response, body) => {
         if (!error && response.statusCode == 200) {
-            FCallback(body);
+            const Pages = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
+            if (body.pageInfo && Pages > 1 && body.nextPageToken){
+                let nextPage = body.nextPageToken;
+                let items = body.items;
+                async.timesSeries(Pages, (n, TCallback) => {
+                    request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}&maxResults=50&pageToken=${nextPage}`, {json: true}, (error, response, NextPageBody) => {
+                        if (!error && response.statusCode == 200) {
+                            if (NextPageBody.items){
+                                items = items.concat(NextPageBody.items);
+                            }
+                            if (NextPageBody.nextPageToken){
+                                nextPage = NextPageBody.nextPageToken;
+                            }
+                            TCallback();
+                        } else {
+                            throw error || response.statusCode;
+                        }
+                    });
+                }, () => {
+                    body.items = items;
+                    FCallback(body);
+                });
+            } else {
+                FCallback(body);
+            }
+            //FCallback(body);
         } else {
-            throw error;
+            throw error || response.statusCode;
         }
     });
 };
@@ -503,6 +616,27 @@ DownloadManager.prototype._moveFile = function (videoId, filename, FCallback) {
             DownloadManager.prototype._markAsNotDownloading(videoId, path.join(path.join(app.getPath('userData'), 'downloads/' + videoId + '/'), filename), () => {
                 FCallback();
             });
+        });
+    });
+};
+
+/**
+ *
+ * @param FCallback
+ * @private
+ */
+DownloadManager.prototype._markEveryDownloadingFileAsUnfinishedOnStartUp = function (FCallback) {
+    DownloadManager.prototype.this().db.find({$or: [{VideoDownloading: true}, {ThumbnailsDownloading: true}]}, (error, CurrentlyDownloading) => {
+        if (error) throw error;
+        let id = [];
+        async.each(CurrentlyDownloading, (RunningDownload, ECallback) => {
+            DownloadManager.prototype.this().db.update({_id: RunningDownload._id}, {$set: {VideoDownloading: false, VideoPath: null, ThumbnailsDownloading: false}}, {}, (error) => {
+                if (error) throw error;
+                id.push(RunningDownload._id);
+                ECallback();
+            });
+        }, () => {
+            FCallback(id);
         });
     });
 };

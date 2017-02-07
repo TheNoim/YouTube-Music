@@ -287,8 +287,13 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     };
 
     $scope.downloadTest = function () {
-        log.info({kind: "youtube#vide", videoId: "9YvQHlcTM24"});
-        socket.send('Start download of', {kind: "youtube#vide", videoId: "9YvQHlcTM24"});
+        log.info({kind: "youtube#video", videoId: "9YvQHlcTM24"});
+        socket.send('Start download of', {kind: "youtube#video", videoId: "9YvQHlcTM24"});
+    };
+
+    $scope.downloadTestPL = function () {
+        log.info({kind: "youtube#playlist", playlistId: "PLwUHjHYlA7ucdqxZM5Uyr6NZn7mzhTf4r"});
+        socket.send('Start download of', {kind: "youtube#playlist", playlistId: "PLwUHjHYlA7ucdqxZM5Uyr6NZn7mzhTf4r"});
     };
 
 });
