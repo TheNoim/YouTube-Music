@@ -234,7 +234,6 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         $scope.safeApply();
     };
 
-
     $scope.$watch('state.current.name', () => {
         $scope.search = ($scope.state.current.name == "library" || $scope.state.current.name == "search-youtube" );
         switch ($scope.state.current.name) {

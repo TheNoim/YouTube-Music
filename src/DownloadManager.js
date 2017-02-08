@@ -562,13 +562,13 @@ DownloadManager.prototype._getVideoInformations = function (videoId, FCallback) 
  */
 DownloadManager.prototype._getPlaylistInformations = function (playlistId, FCallback) {
     log.info(`PlaylistId: `, playlistId);
-    request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}&maxResults=50`, {json: true}, (error, response, body) => {
+    request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}`, {json: true}, (error, response, body) => {
         if (!error && response.statusCode == 200) {
             const Pages = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
             if (body.pageInfo && Pages > 1 && body.nextPageToken){
                 let nextPage = body.nextPageToken;
                 let items = body.items;
-                async.timesSeries(Pages, (n, TCallback) => {
+                async.timesSeries(Pages + 1, (n, TCallback) => {
                     request(`https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${playlistId}&maxResults=50&pageToken=${nextPage}`, {json: true}, (error, response, NextPageBody) => {
                         if (!error && response.statusCode == 200) {
                             if (NextPageBody.items){
