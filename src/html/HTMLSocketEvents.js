@@ -67,6 +67,7 @@ module.exports = function (cfg) {
             }
         }
         $scope.AllDownloads.push(add);
+        $scope.filterDownloaded($scope.AllDownloadedQuery);
         $scope.safeApply();
     });
 
@@ -99,6 +100,7 @@ module.exports = function (cfg) {
                 }
             }
         }
+        $scope.filterDownloaded($scope.AllDownloadedQuery);
         $scope.safeApply();
     });
 };

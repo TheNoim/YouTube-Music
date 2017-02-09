@@ -11,6 +11,7 @@ const getYouTubeID = require('get-youtube-id');
 const path = require('path');
 const Query = require('./Query');
 const percentage = require('percentage-calc');
+const async = require('async');
 
 
 const an = angular.module('YouTubePlayer', ['ngMaterial', 'ui.router', 'ui.router.title']);
@@ -235,7 +236,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     };
 
     $scope.$watch('state.current.name', () => {
-        $scope.search = ($scope.state.current.name == "library" || $scope.state.current.name == "search-youtube" );
+        //$scope.search = ($scope.state.current.name == "library" || $scope.state.current.name == "search-youtube" );
         switch ($scope.state.current.name) {
             case "search-youtube":
                 $scope.DoQuery = function (textquery) {
@@ -249,6 +250,9 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                     $scope.safeApply();
                 }, 1000);
                 break;
+            case "download":
+                $scope.filterDownloaded(null);
+                break;
             default:
                 $scope.DoQuery = function () {
                     $scope.QueryResults = [];
@@ -258,42 +262,73 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         $scope.safeApply();
     });
 
-    $scope.AddOrRemove = function (Data, index) {
-        if ($scope.QueryResults[index].add_button == "add") {
-            $scope.QueryResults[index].checked = false;
-            $scope.safeApply();
-            log.info(Data);
-            socket.send('add to library', Data, (error) => {
-                if (error) throw error;
-                if (!error) {
-                    $scope.QueryResults[index].add_button = "remove_circle";
-                    $scope.QueryResults[index].checked = true;
-                    $scope.safeApply();
-                }
-            });
-        } else {
-            $scope.QueryResults[index].checked = false;
-            $scope.safeApply();
-            socket.send('remove from library', Data, (error) => {
-                if (error) throw error;
-                if (!error) {
-                    $scope.QueryResults[index].add_button = "add";
-                    $scope.QueryResults[index].checked = true;
-                    $scope.safeApply();
-                }
-            });
-        }
-    };
-
     $scope.downloadTest = function () {
         log.info({kind: "youtube#video", videoId: "9YvQHlcTM24"});
         socket.send('Start download of', {kind: "youtube#video", videoId: "9YvQHlcTM24"});
+    };
+
+    $scope.downloadVideo = function (videoId) {
+        socket.send('Start download of', {kind: "youtube#video", videoId: videoId});
+    };
+
+    $scope.downloadPlaylist = function (playlistId) {
+        socket.send('Start download of', {kind: "youtube#playlist", playlistId: playlistId});
     };
 
     $scope.downloadTestPL = function () {
         log.info({kind: "youtube#playlist", playlistId: "PLwUHjHYlA7ucdqxZM5Uyr6NZn7mzhTf4r"});
         socket.send('Start download of', {kind: "youtube#playlist", playlistId: "PLwUHjHYlA7ucdqxZM5Uyr6NZn7mzhTf4r"});
     };
+
+    $scope.filterDownloaded = function (Query) {
+        $scope.AllDownloadedQuery = Query;
+        return new Promise((resolve, reject) => {
+            $scope.socket.send('get all downloaded songs', (error, data) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    if (Query){
+                        let FilteredDownloads = [];
+                        async.each(data, (CData, ECallback) => {
+                            if (CData.snippet.title.toLowerCase().includes(Query.toLowerCase()) || CData.snippet.channelTitle.toLowerCase().includes(Query.toLowerCase())){
+                                FilteredDownloads.push(CData);
+                            }
+                            ECallback();
+                        }, () => {
+                            $scope.AllDownloaded = FilteredDownloads;
+                            $scope.safeApply(() => {
+                                resolve(FilteredDownloads);
+                            });
+                        });
+                    } else {
+                        $scope.AllDownloaded = data;
+                        $scope.safeApply(() => {
+                            resolve(data);
+                        });
+                    }
+                }
+            });
+        });
+    };
+
+    $scope.reDownload = function (index) {
+        $scope.AllDownloaded[index].redo = true;
+        $scope.safeApply(() => {
+            $scope.socket.send('re-download with id', {kind: "youtube#video", videoId: $scope.AllDownloaded[index]._id}, (e, error) => {
+                log.info(`${$scope.AllDownloaded[index]._id} added again to queue.`, error);
+            });
+        });
+    };
+
+    $scope.removeDownload = function (index) {
+        $scope.AllDownloaded[index].redo = true;
+        $scope.safeApply(() => {
+            $scope.socket.send('remove download', {videoId: $scope.AllDownloaded[index]._id}, () => {
+                log.info(`Removed ${$scope.AllDownloaded[index]._id}`);
+                $scope.filterDownloaded($scope.AllDownloadedQuery);
+            });
+        });
+    }
 
 });
 
@@ -377,9 +412,9 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
             url: '/search/youtube',
             templateUrl: 'pages/Search-YouTube.html',
             controller: function ($scope, $rootScope, $mdDialog) {
-                $scope.$watch('showonly', () => {
-                    $rootScope.$emit('showonly', $scope.showonly);
-                });
+                // $scope.$watch('showonly', () => {
+                //     $rootScope.$emit('showonly', $scope.showonly);
+                // });
                 $scope.showonly = "";
                 $scope.showDetails = function (index) {
                     $scope.Details = {};
@@ -410,7 +445,57 @@ an.config(function ($stateProvider, $urlRouterProvider, $mdThemingProvider) {
                         $rootScope.$emit('Play', $scope.QueryResults[index].id.videoId);
                     }
 
-                }
+                };
+
+                $scope.DoQuery = function (textquery) {
+                    Query.SearchOnYouTube(textquery, null, $scope.showonly, $scope, socket);
+                    $scope.safeApply();
+                };
+
+                $scope.SearchOnYT = function (QQuery) {
+                    return new Promise((resolve, reject) => {
+                        if ($scope.SOYTPromise){
+                            if ($scope.SOYTPromise.isPending()){
+                                $scope.SOYTPromise.cancel();
+                            }
+                        }
+                        $scope.SOYTPromise = Query.Query(QQuery, null, $scope.showonly, $scope.socket).then((Result) => {
+                            $scope.QueryResults = Result;
+                            $scope.safeApply();
+                            resolve(Result);
+                        }).catch((e) => {
+                            log.error(e);
+                            reject(e);
+                        });
+                    });
+                };
+                $scope.AddOrRemove = function (Data, index) {
+                    console.log($scope.QueryResults[index]);
+                    if ($scope.QueryResults[index].add_button == "add") {
+                        $scope.QueryResults[index].checked = false;
+                        $scope.safeApply();
+                        log.info(Data);
+                        $scope.socket.send('add to library', Data, (error) => {
+                            if (error) throw error;
+                            if (!error) {
+                                $scope.QueryResults[index].add_button = "remove_circle";
+                                $scope.QueryResults[index].checked = true;
+                                $scope.safeApply();
+                            }
+                        });
+                    } else {
+                        $scope.QueryResults[index].checked = false;
+                        $scope.safeApply();
+                        $scope.socket.send('remove from library', Data, (error) => {
+                            if (error) throw error;
+                            if (!error) {
+                                $scope.QueryResults[index].add_button = "add";
+                                $scope.QueryResults[index].checked = true;
+                                $scope.safeApply();
+                            }
+                        });
+                    }
+                };
             },
             resolve: {
                 $title: function () {

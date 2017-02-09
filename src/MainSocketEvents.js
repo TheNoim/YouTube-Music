@@ -12,10 +12,6 @@ const {app} = require('electron');
 
 let downloadTaskList = {};
 
-const downloadTask = async.queue((info, Callback) => {
-
-}, 3);
-
 module.exports = function (cfg) {
     log.info("Setup main process socket events");
 
@@ -27,13 +23,13 @@ module.exports = function (cfg) {
 
     socket.on('message:in library ?', (msg) => {
         const data = msg.data();
-        if (data.id){
-            if (data.id.kind == "youtube#playlist"){
+        if (data.id) {
+            if (data.id.kind == "youtube#playlist") {
                 db.findOne({
                     _id: data.id.playlistId
                 }, (err, playlist) => {
                     if (err) throw err;
-                    if (playlist && playlist.inLibrary){
+                    if (playlist && playlist.inLibrary) {
                         msg.reply({
                             inLibrary: true,
                             result: playlist
@@ -44,12 +40,12 @@ module.exports = function (cfg) {
                         });
                     }
                 });
-            } else if (data.id.kind == "youtube#video"){
+            } else if (data.id.kind == "youtube#video") {
                 db.findOne({
                     _id: data.id.videoId
                 }, (err, video) => {
                     if (err) throw err;
-                    if (video && video.inLibrary){
+                    if (video && video.inLibrary) {
                         msg.reply({
                             inLibrary: true,
                             result: video
@@ -71,8 +67,8 @@ module.exports = function (cfg) {
 
     socket.on('message:add to library', (msg) => {
         const data = msg.data();
-        if (data.id){
-            if (data.id.kind == "youtube#playlist"){
+        if (data.id) {
+            if (data.id.kind == "youtube#playlist") {
                 let Params = {
                     part: "snippet",
                     key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
@@ -85,7 +81,7 @@ module.exports = function (cfg) {
                 }, (error, response, body) => {
                     if (!error && response.statusCode == 200) {
                         const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
-                        if (body.nextPageToken){
+                        if (body.nextPageToken) {
                             let next = body.nextPageToken;
                             let videos = [];
                             videos = videos.concat(body.items);
@@ -102,7 +98,7 @@ module.exports = function (cfg) {
                                     json: true
                                 }, (error, response, xBody) => {
                                     if (!error && response.statusCode == 200) {
-                                        if (xBody.nextPageToken){
+                                        if (xBody.nextPageToken) {
                                             next = xBody.nextPageToken;
                                         }
                                         videos = videos.concat(xBody.items);
@@ -117,7 +113,7 @@ module.exports = function (cfg) {
                                 data.inLibrary = true;
                                 delete data["$$hashKey"];
                                 db.insert(data, (error) => {
-                                    if (error){
+                                    if (error) {
                                         msg.reply({
                                             error: error
                                         });
@@ -138,8 +134,8 @@ module.exports = function (cfg) {
                 db.findOne({
                     _id: data.id.videoId
                 }, (error, doc) => {
-                    if (doc){
-                        db.update({_id: data.id.videoId},{$set: {inLibrary: true}}, (error, newDoc) => {
+                    if (doc) {
+                        db.update({_id: data.id.videoId}, {$set: {inLibrary: true}}, (error, newDoc) => {
                             log.info(`Video added to db. New data: `, newDoc);
                             msg.reply({});
                             socket.send('update library');
@@ -163,9 +159,9 @@ module.exports = function (cfg) {
 
     socket.on('message:remove from library', (msg) => {
         const data = msg.data();
-        if (data.id){
+        if (data.id) {
             let id;
-            if (data.id.kind == "youtube#playlist"){
+            if (data.id.kind == "youtube#playlist") {
                 id = data.id.playlistId;
             } else if (data.id.kind == "youtube#video") {
                 id = data.id.videoId;
@@ -179,12 +175,12 @@ module.exports = function (cfg) {
                 });
             };
             db.findOne({_id: id}, (error, doc) => {
-                if (doc){
-                    if (data.id.kind == "youtube#video"){
-                        if (doc.VideoDownloaded){
+                if (doc) {
+                    if (data.id.kind == "youtube#video") {
+                        if (doc.VideoDownloaded) {
                             const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + data.id.videoId + '/');
                             fs.access(DownloadPath, fs.constants.W_OK, (err) => {
-                                if (!err){
+                                if (!err) {
                                     fs.remove(DownloadPath, (err) => {
                                         remove();
                                     });
@@ -198,11 +194,11 @@ module.exports = function (cfg) {
                     } else {
                         async.eachSeries(data.items, (Video, EachCallback) => {
                             db.findOne({_id: Video.snippet.resourceId.videoId}, (error, vResult) => {
-                                if (vResult){
-                                    if (vResult.VideoDownloaded){
+                                if (vResult) {
+                                    if (vResult.VideoDownloaded) {
                                         const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + vResult.id.videoId + '/');
                                         fs.access(DownloadPath, fs.constants.W_OK, (err) => {
-                                            if (!err){
+                                            if (!err) {
                                                 fs.remove(DownloadPath, (err) => {
                                                     EachCallback();
                                                 });
@@ -234,7 +230,7 @@ module.exports = function (cfg) {
     socket.on('message:get video informations', (msg) => {
         const data = msg.data();
         db.findOne({_id: data.videoId}, (err, doc) => {
-            if (doc){
+            if (doc) {
                 msg.reply(doc);
             } else {
                 request(`https://www.googleapis.com/youtube/v3/videos?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&id=${data.videoId}`, {json: true}, (error, response, body) => {
@@ -251,7 +247,7 @@ module.exports = function (cfg) {
     socket.on('message:get playlist informations', (msg) => {
         const data = msg.data();
         db.findOne({_id: data.playlistId}, (err, doc) => {
-            if (doc){
+            if (doc) {
                 msg.reply(doc);
             } else {
                 let Params = {
@@ -266,7 +262,7 @@ module.exports = function (cfg) {
                 }, (error, response, body) => {
                     if (!error && response.statusCode == 200) {
                         const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
-                        if (body.nextPageToken){
+                        if (body.nextPageToken) {
                             let next = body.nextPageToken;
                             let videos = [];
                             videos = videos.concat(body.items);
@@ -283,7 +279,7 @@ module.exports = function (cfg) {
                                     json: true
                                 }, (error, response, xBody) => {
                                     if (!error && response.statusCode == 200) {
-                                        if (xBody.nextPageToken){
+                                        if (xBody.nextPageToken) {
                                             next = xBody.nextPageToken;
                                         }
                                         videos = videos.concat(xBody.items);
@@ -312,12 +308,12 @@ module.exports = function (cfg) {
         db.find({inLibrary: true}, (error, docs) => {
             if (error) throw error;
             if (!error) {
-                if (docs){
+                if (docs) {
                     let returnResults = [];
-                    for (let Index in docs){
-                        if (docs.hasOwnProperty(Index)){
-                            if (docs[Index].id){
-                                if (docs[Index].id.kind == "youtube#playlist"){
+                    for (let Index in docs) {
+                        if (docs.hasOwnProperty(Index)) {
+                            if (docs[Index].id) {
+                                if (docs[Index].id.kind == "youtube#playlist") {
                                     returnResults.push(docs[Index])
                                 }
                             }
@@ -335,12 +331,12 @@ module.exports = function (cfg) {
         db.find({inLibrary: true}, (error, docs) => {
             if (error) throw error;
             if (!error) {
-                if (docs){
+                if (docs) {
                     let returnResults = [];
-                    for (let Index in docs){
-                        if (docs.hasOwnProperty(Index)){
-                            if (docs[Index].id){
-                                if (docs[Index].id.kind == "youtube#video"){
+                    for (let Index in docs) {
+                        if (docs.hasOwnProperty(Index)) {
+                            if (docs[Index].id) {
+                                if (docs[Index].id.kind == "youtube#video") {
                                     returnResults.push(docs[Index])
                                 }
                             }
@@ -359,14 +355,119 @@ module.exports = function (cfg) {
         let add = {
             kind: msg.kind
         };
-        if (msg.videoId){
+        if (msg.videoId) {
             add.videoId = msg.videoId;
         }
-        if (msg.playlistId){
+        if (msg.playlistId) {
             add.playlistId = msg.playlistId;
         }
         log.info(msg);
         DownloadManager.this().task.push(add);
     });
 
+    socket.on('message:get all downloaded songs', (msg) => {
+        db.find({VideoDownloaded: true}, (error, Docs) => {
+            if (error) throw error;
+            msg.reply(Docs);
+        });
+    });
+
+    socket.on('message:re-download with id', (msg) => {
+        if (msg.data().kind && msg.data().kind == "youtube#video") {
+            async.waterfall([
+                (WCallback) => {
+                    RemoveOnlyDownload(msg.data().videoId, WCallback)
+                },
+                (WCallback) => {
+                    DownloadManager.this().task.push({
+                        kind: "youtube#video",
+                        videoId: msg.data().videoId
+                    });
+                    WCallback();
+                }
+            ], (error) => {
+                msg.reply(error);
+            })
+        } else if (msg.data().kind && msg.data().kind == "youtube#playlist") {
+            // Todo: Need to add playlist
+        } else {
+            msg.reply();
+        }
+    });
+
+    socket.on('message:remove download', (msg) => {
+        RemoveOnlyDownload(msg.data().videoId, () =>{
+            msg.reply();
+        })
+    });
+
+    function RemoveOnlyDownload(videoId, FCallback) {
+        async.waterfall([
+            (WCallback) => {
+                log.info(videoId);
+                db.findOne({_id: videoId}, (error, Doc) => {
+                    if (!error && Doc) {
+                        WCallback(null, Doc);
+                    } else {
+                        WCallback(error || "Nothing found");
+                    }
+                });
+            },
+            (Video, WCallback) => {
+                if (Video.VideoPath) {
+                    fs.access(Video.VideoPath, fs.constants.R_OK | fs.constants.W_OK, (error) => {
+                        if (!error) {
+                            fs.remove(Video.VideoPath, (error) => {
+                                WCallback(error, Video);
+                            });
+                        } else {
+                            WCallback(null, Video);
+                        }
+                    });
+                } else {
+                    WCallback(null, Video);
+                }
+            },
+            (Video, WCallback) => {
+                if (Video.snippet && Video.snippet.thumbnails) {
+                    let Keys = [];
+                    async.eachOf(Video.snippet.thumbnails, (Value, Key, ECallback) => {
+                        Keys.push(Key);
+                        if (Value.Path) {
+                            fs.access(Value.Path, fs.constants.R_OK | fs.constants.W_OK, (error) => {
+                                if (!error) {
+                                    fs.remove(Value.Path, ECallback);
+                                } else {
+                                    ECallback();
+                                }
+                            });
+                        } else {
+                            ECallback();
+                        }
+                    }, (error) => {
+                        WCallback(error, Video, Keys);
+                    });
+                } else {
+                    WCallback(null, Video);
+                }
+            },
+            (Video, ThumbnailKeys, WCallback) => {
+                let update = {
+                    VideoPath: null,
+                    VideoDownloaded: false
+                };
+                for (let TIndex in ThumbnailKeys) {
+                    if (ThumbnailKeys.hasOwnProperty(TIndex)) {
+                        update[`snippet.thumbnails.${ThumbnailKeys[TIndex]}.Downloaded`] = null;
+                        update[`snippet.thumbnails.${ThumbnailKeys[TIndex]}.Path`] = null;
+                    }
+                }
+                db.update({_id: videoId}, {$set: update}, {}, (error) => {
+                    WCallback(error);
+                });
+            }
+        ], (error) => {
+            FCallback(error);
+        });
+    }
 };

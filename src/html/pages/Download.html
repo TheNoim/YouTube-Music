@@ -1,6 +1,6 @@
-<!DOCTYPE html>
+<!-- -->
 <div layout-padding>
-    <h1>Current Downloads</h1>
+    <h1>Current download jobs</h1>
     <md-list ng-if="AllDownloads.length > 0" class="nga-default nga-stagger nga-collapse">
         <md-list-item ng-repeat="Download in AllDownloads" class="md-3-line nga-default nga-stagger nga-collapse">
             <img ng-src="{{ Download.VideoData.snippet.thumbnails.maxres.url }}" class="md-avatar no-select nga-default nga-stagger nga-collapse" style="height: 90px; width: 90px;">
@@ -12,6 +12,34 @@
         </md-list-item>
     </md-list>
     <div layout-align="center center" layout="row" ng-if="AllDownloads.length == 0">
-        <p>No currently running downloads</p>
+        <p>No currently running download jobs</p>
+    </div>
+    <div layout="row" layout-align="space-between center">
+        <h1>Downloads</h1>
+        <md-autocomplete flex="50" md-search-text-change="filterDownloaded(DownloadedFilterQuery)" md-selected-item-change="filterDownloaded(DownloadedFilterQuery)" md-search-text="DownloadedFilterQuery" md-items="DownloadedItem in AllDownloaded" md-item-text="DownloadedItem.snippet.title">
+            <md-item-template>
+                <span md-highlight-text="DownloadedFilterQuery">{{DownloadedItem.snippet.title}}</span>
+            </md-item-template>
+        </md-autocomplete>
+    </div>
+    <md-list ng-if="AllDownloaded.length > 0" class="nga-default nga-stagger nga-collapse">
+        <md-list-item ng-repeat="Download in AllDownloaded" class="md-3-line">
+            <img style="height: 90px; width: 90px;" class="md-avatar no-select" ng-src="{{ Download.snippet.thumbnails.maxres.Path || Download.snippet.thumbnails.standard.Path || Download.snippet.thumbnails.high.Path || Download.snippet.thumbnails.medium.Path || Download.snippet.thumbnails.default.Path || Download.snippet.thumbnails.maxres.url || Download.snippet.thumbnails.standard.url || Download.snippet.thumbnails.high.url || Download.snippet.thumbnails.medium.url || Download.snippet.thumbnails.default.url}}">
+            <div class="md-list-item-text" layout="column">
+                <h3>{{ Download.snippet.title }}</h3>
+                <h4>by {{ Download.snippet.channelTitle }}</h4>
+            </div>
+            <md-button class="md-secondary md-icon-button" ng-click="reDownload($index)" ng-disabled="Download.redo">
+                <md-icon>redo</md-icon>
+                <md-tooltip>Re-download</md-tooltip>
+            </md-button>
+            <md-button class="md-secondary md-icon-button" ng-click="removeDownload($index)" ng-disabled="Download.redo">
+                <md-icon>delete</md-icon>
+                <md-tooltip>Remove</md-tooltip>
+            </md-button>
+        </md-list-item>
+    </md-list>
+    <div layout-align="center center" layout="row" ng-if="AllDownloaded.length == 0">
+        <p>There is nothing</p>
     </div>
 </div>
