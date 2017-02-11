@@ -67,164 +67,204 @@ module.exports = function (cfg) {
 
     socket.on('message:add to library', (msg) => {
         const data = msg.data();
-        if (data.id) {
-            if (data.id.kind == "youtube#playlist") {
-                let Params = {
-                    part: "snippet",
-                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
-                    playlistId: data.id.playlistId
-                };
-                let FirstURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
-                FirstURL.query = Params;
-                request(url.format(FirstURL), {
-                    json: true
-                }, (error, response, body) => {
-                    if (!error && response.statusCode == 200) {
-                        const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
-                        if (body.nextPageToken) {
-                            let next = body.nextPageToken;
-                            let videos = [];
-                            videos = videos.concat(body.items);
-                            async.timesSeries(pageCount, (n, TimeCallback) => {
-                                let Params = {
-                                    part: "snippet",
-                                    key: "AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ",
-                                    playlistId: data.id.playlistId,
-                                    pageToken: next
-                                };
-                                let PlayListRequestURL = url.parse('https://www.googleapis.com/youtube/v3/playlistItems');
-                                PlayListRequestURL.query = Params;
-                                request(url.format(PlayListRequestURL), {
-                                    json: true
-                                }, (error, response, xBody) => {
-                                    if (!error && response.statusCode == 200) {
-                                        if (xBody.nextPageToken) {
-                                            next = xBody.nextPageToken;
-                                        }
-                                        videos = videos.concat(xBody.items);
-                                        TimeCallback();
-                                    } else {
-                                        TimeCallback();
+        if (!data.id) return msg.reply(null);
+        if (data.id.kind == "youtube#playlist") {
+            const PlayListItemURL = `https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${data.id.playlistId}`;
+            request(PlayListItemURL, {
+                json: true
+            }, (error, response, body) => {
+                if (!error && response.statusCode == 200) {
+                    const pageCount = parseInt(body.pageInfo.totalResults / body.pageInfo.resultsPerPage);
+                    if (body.nextPageToken) {
+                        let next = body.nextPageToken;
+                        let videos = [];
+                        videos = videos.concat(body.items);
+                        async.timesSeries(pageCount, (n, TimeCallback) => {
+                            const NextPageURL = `https://www.googleapis.com/youtube/v3/playlistItems?key=AIzaSyAmrU02S7vOBKU2Ep6lpaGP9SW7y3K3KKQ&part=snippet&playlistId=${data.id.playlistId}&pageToken=${next}`;
+                            request(NextPageURL, {
+                                json: true
+                            }, (error, NextPageResponse, NextPageBody) => {
+                                if (!error && NextPageResponse.statusCode == 200) {
+                                    if (NextPageBody.nextPageToken) {
+                                        next = NextPageBody.nextPageToken;
                                     }
-                                });
-                            }, () => {
-                                data.items = videos;
-                                data._id = data.id.playlistId;
-                                data.inLibrary = true;
-                                delete data["$$hashKey"];
-                                db.insert(data, (error) => {
-                                    if (error) {
-                                        msg.reply({
-                                            error: error
-                                        });
-                                    } else {
-                                        msg.reply({});
-                                    }
-                                    socket.send('update library');
-                                });
+                                    videos = videos.concat(NextPageBody.items);
+                                    TimeCallback();
+                                } else {
+                                    TimeCallback();
+                                }
                             });
-                        } else {
-                            // Error
-                        }
-                    } else {
-                        // Error
-                    }
-                });
-            } else if (data.id.kind == "youtube#video") {
-                db.findOne({
-                    _id: data.id.videoId
-                }, (error, doc) => {
-                    if (doc) {
-                        db.update({_id: data.id.videoId}, {$set: {inLibrary: true}}, (error, newDoc) => {
-                            log.info(`Video added to db. New data: `, newDoc);
-                            msg.reply({});
-                            socket.send('update library');
+                        }, () => {
+                            data.items = videos;
+                            data.inLibrary = true;
+                            data._id = data.id.playlistId;
+                            delete data["$$hashKey"];
+                            db.findOne({_id: data.id.playlistId}, (error, exists) => {
+                                if (exists){
+                                    db.update({_id: data.id.playlistId}, {$set: data}, {}, (error) => {
+                                        if (error) throw error;
+                                        msg.reply({});
+                                    });
+                                } else {
+                                    db.insert(data, (error) => {
+                                        if (error) throw error;
+                                        msg.reply({});
+                                    });
+                                }
+                            });
                         });
                     } else {
-                        log.info(`Add video with id ${data.id.videoId}`);
-                        data._id = data.id.videoId;
                         data.inLibrary = true;
+                        data._id = data.id.playlistId;
                         delete data["$$hashKey"];
-                        db.insert(data, (error, newDoc) => {
-                            if (error) throw error;
-                            log.info(`Video added to db. New data: `, newDoc);
-                            msg.reply({});
-                            socket.send('update library');
+                        db.findOne({_id: data.id.playlistId}, (error, exists) => {
+                            if (exists){
+                                db.update({_id: data.id.playlistId}, {$set: data}, {}, (error) => {
+                                    if (error) throw error;
+                                    msg.reply({});
+                                });
+                            } else {
+                                db.insert(data, (error) => {
+                                    if (error) throw error;
+                                    msg.reply({});
+                                });
+                            }
                         });
                     }
-                });
-            }
+                } else {
+                    msg.reply(null);
+                }
+            });
+        } else if (data.id.kind == "youtube#video") {
+            db.findOne({
+                _id: data.id.videoId
+            }, (error, doc) => {
+                if (doc) {
+                    db.update({_id: data.id.videoId}, {$set: {inLibrary: true}}, (error, newDoc) => {
+                        log.info(`Video added to db. New data: `, newDoc);
+                        msg.reply({});
+                        socket.send('update library');
+                    });
+                } else {
+                    log.info(`Add video with id ${data.id.videoId}`);
+                    data._id = data.id.videoId;
+                    data.inLibrary = true;
+                    delete data["$$hashKey"];
+                    db.insert(data, (error, newDoc) => {
+                        if (error) throw error;
+                        log.info(`Video added to db. New data: `, newDoc);
+                        msg.reply({});
+                        socket.send('update library');
+                    });
+                }
+            });
         }
     });
 
     socket.on('message:remove from library', (msg) => {
         const data = msg.data();
-        if (data.id) {
-            let id;
-            if (data.id.kind == "youtube#playlist") {
-                id = data.id.playlistId;
-            } else if (data.id.kind == "youtube#video") {
-                id = data.id.videoId;
-            }
-            const remove = function () {
-                log.info(`Remove data with id ${id}`);
-                db.remove({_id: id}, {}, (error) => {
-                    log.info(`Removed data with id ${id}`);
-                    msg.reply(error);
-                    socket.send('update library');
-                });
-            };
-            db.findOne({_id: id}, (error, doc) => {
-                if (doc) {
-                    if (data.id.kind == "youtube#video") {
-                        if (doc.VideoDownloaded) {
-                            const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + data.id.videoId + '/');
-                            fs.access(DownloadPath, fs.constants.W_OK, (err) => {
-                                if (!err) {
-                                    fs.remove(DownloadPath, (err) => {
-                                        remove();
-                                    });
-                                } else {
+        if (!data.id) return msg.reply(null);
+        let id;
+        if (data.id.kind == "youtube#playlist") {
+            id = data.id.playlistId;
+        } else if (data.id.kind == "youtube#video") {
+            id = data.id.videoId;
+        }
+        const remove = function () {
+            log.info(`Remove data with id ${id}`);
+            db.update({_id: id}, {$set: {inLibrary: false}}, {}, (error) => {
+                if (error) throw error;
+                log.info(`Removed from library with id ${id}`);
+                msg.reply(error);
+            });
+        };
+        db.findOne({_id: id}, (error, doc) => {
+            if (error) throw error;
+            if (!doc) return msg.reply({});
+            if (data.id.kind == "youtube#video") {
+                if (data.RemoveDownload) {
+                    if (!doc.VideoDownloaded) return remove();
+                    const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + data.id + '/');
+                    fs.access(DownloadPath, fs.constants.W_OK, (error) => {
+                        if (error) return remove();
+                        fs.remove(DownloadPath, (error) => {
+                            if (error) log.error(error);
+                            let update = {};
+                            update.VideoDownloaded = false;
+                            update.Path = null;
+                            async.eachOf(doc.snippet.thumbnails, (Value, Key, EOCallback) => {
+                                update[`snippet.thumbnails.${Key}.Path`] = null;
+                                update[`snippet.thumbnails.${Key}.Downloaded`] = false;
+                                EOCallback();
+                            }, (error) => {
+                                if (error) log.error(error);
+                                db.update({_id: data.id}, {$set: update}, {}, (error) => {
+                                    if (error) log.error(error);
                                     remove();
-                                }
+                                });
                             });
-                        } else {
-                            remove();
-                        }
-                    } else {
-                        async.eachSeries(data.items, (Video, EachCallback) => {
-                            db.findOne({_id: Video.snippet.resourceId.videoId}, (error, vResult) => {
-                                if (vResult) {
-                                    if (vResult.VideoDownloaded) {
-                                        const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + vResult.id.videoId + '/');
-                                        fs.access(DownloadPath, fs.constants.W_OK, (err) => {
-                                            if (!err) {
-                                                fs.remove(DownloadPath, (err) => {
-                                                    EachCallback();
-                                                });
-                                            } else {
-                                                EachCallback();
-                                            }
+                        });
+                    });
+                }
+            } else if (data.id.kind == "youtube#playlist") {
+                const RemoveItemDownloads = function (ItemsToRemove, FCallback) {
+                    async.eachSeries(ItemsToRemove, (ToRemove, ECallback) => {
+                        if (!ToRemove.snippet || !ToRemove.snippet.resourceId || !ToRemove.snippet.resourceId.videoId) return ECallback();
+                        db.findOne({_id: ToRemove.snippet.resourceId.videoId}, (error, ToRemoveFromDB) => {
+                            if (error || !ToRemoveFromDB || !ToRemoveFromDB.VideoDownloaded) return ECallback();
+                            const DownloadPath = path.join(app.getPath('userData'), 'downloads/' + ToRemoveFromDB.id + '/');
+                            log.info(DownloadPath);
+                            fs.access(DownloadPath, fs.constants.W_OK, (error) => {
+                                const MarkAsNotDownloaded = function () {
+                                    log.info(`Mark ${ToRemoveFromDB.id} as not downloaded.`);
+                                    let update = {};
+                                    update.VideoDownloaded = false;
+                                    update.Path = null;
+                                    async.eachOf(ToRemoveFromDB.snippet.thumbnails, (Value, Key, EOCallback) => {
+                                        update[`snippet.thumbnails.${Key}.Path`] = null;
+                                        update[`snippet.thumbnails.${Key}.Downloaded`] = false;
+                                        EOCallback();
+                                    }, (error) => {
+                                        if (error) log.error(error);
+                                        db.update({_id: ToRemoveFromDB.id}, {$set: update}, {}, (error) => {
+                                            if (error) log.error(error);
+                                            ECallback();
                                         });
-                                    } else {
-                                        EachCallback();
-                                    }
+                                    });
+                                };
+                                if (error) {
+                                    MarkAsNotDownloaded();
                                 } else {
-                                    EachCallback();
+                                    log.info(`Remove downloaded files of ${ToRemoveFromDB.id.videoId}.`);
+                                    fs.remove(DownloadPath, (error) => {
+                                        if (error) log.error(error);
+                                        MarkAsNotDownloaded();
+                                    });
                                 }
+
                             });
-                        }, () => {
+                        });
+                    }, (error) => {
+                        if (error) log.error(error);
+                        FCallback();
+                    });
+                };
+                if (data.RemoveOnly) {
+                    RemoveItemDownloads(data.RemoveOnly, () => {
+                        remove();
+                    });
+                } else {
+                    db.findOne({_id: data.id.playlistId}, (error, doc) => {
+                        if (error) throw error;
+                        RemoveItemDownloads(doc.items, () => {
                             remove();
                         });
-                    }
-                } else {
-                    msg.reply();
+                    });
                 }
-            });
-        } else {
-            // Error
-            msg.reply();
-        }
+            } else {
+                msg.reply({});
+            }
+        });
     });
 
     socket.on('message:get video informations', (msg) => {
@@ -396,7 +436,7 @@ module.exports = function (cfg) {
     });
 
     socket.on('message:remove download', (msg) => {
-        RemoveOnlyDownload(msg.data().videoId, () =>{
+        RemoveOnlyDownload(msg.data().videoId, () => {
             msg.reply();
         })
     });
