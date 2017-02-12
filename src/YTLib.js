@@ -12,6 +12,9 @@ const fs = require('fs');
 function YTLib(video_id, link) {
     YTLib.prototype.self().video_id = video_id;
     YTLib.prototype.self().link = link;
+    this.extractBestAudioFormat = this.extractBestAudioFormat.bind(this);
+    this.download = this.download.bind(this);
+    this.info = this.info.bind(this);
 }
 
 YTLib.prototype = new EventEmitter();
