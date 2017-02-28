@@ -41,9 +41,9 @@
             </md-list-item>
         </md-list>
     </md-sidenav>
-    <md-toolbar flex="nogrow" md-whiteframe="10" class="">
+    <md-toolbar style="{{ ToolbarColors }}" flex="nogrow" md-whiteframe="10" class="">
         <div class="md-toolbar-tools">
-            <md-button class="md-icon-button" ng-click="toggleSideNav()">
+            <md-button style="{{ PlayerButtonColors }}" class="md-icon-button" ng-click="toggleSideNav()">
                 <md-icon>menu</md-icon>
             </md-button>
             <span ng-bind="($title || 'Home')"></span>

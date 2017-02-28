@@ -12,6 +12,7 @@ const path = require('path');
 const Query = require('./Query');
 const percentage = require('percentage-calc');
 const async = require('async');
+const Vibrant = require('node-vibrant');
 
 
 const an = angular.module('YouTubePlayer', ['ngMaterial', 'ui.router', 'ui.router.title']);
@@ -38,6 +39,12 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
 
     $scope.state = $state;
 
+    $scope.PlayerToolbar = `max-height: 20%;`;
+    $scope.ToolbarColors = ``;
+    $scope.PlayerButtonColors = "";
+    $scope.ContentStyle = "height: 100%";
+    $rootScope.TestT = "X";
+
     $rootScope.$on('showonly', (ev, showonly) => {
         $scope.showonly = showonly;
         $scope.DoQuery(document.getElementById('SearchField').value);
@@ -48,6 +55,25 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     $scope.VideoPlayer.onplay = () => {
         $rootScope.$emit('VideoPlayerIsNowPlaying');
     };
+
+    $rootScope.$on('VideoInformationLoaded', () => {
+        console.log(`Thumbnail: ${$scope.CurrentThumbnail}`);
+        Vibrant.from($scope.CurrentThumbnail).getPalette((error, Palette) => {
+            if (!error){
+                console.log(Palette);
+                $scope.PlayerToolbar = `max-height: 20%; background-color: ${Palette.Vibrant.getHex()}!important; color: ${Palette.Vibrant.getBodyTextColor()}!important;`;
+                $scope.PlayerButtonColors = `color: ${Palette.Vibrant.getBodyTextColor()}!important;`;
+                $scope.ContentStyle = `height: 100%; background-color: ${Palette.Vibrant.getHex()};`;
+                $scope.ToolbarColors = `background-color: ${Palette.Muted.getHex()}!important; color: ${Palette.Muted.getBodyTextColor()}!important;`;
+                $rootScope.$emit('ApplyColors', $scope.PlayerToolbar, $scope.PlayerButtonColors, $scope.ContentStyle);
+                $scope.safeApply();
+            } else {
+                console.error(error);
+            }
+        });
+
+    });
+
     $scope.CurrentVideoId = "";
     $scope.CurrentVideoSrc = "";
     $scope.CurrentVideoInfo = null;
@@ -84,7 +110,10 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             CurrentPLPosition: $scope.CurrentPLPosition,
             CurrentPL: $scope.CurrentPL,
             muted: $scope.VideoPlayer.muted,
-            Thumbnail: $scope.CurrentThumbnail
+            Thumbnail: $scope.CurrentThumbnail,
+            PlayerToolbar: $scope.PlayerToolbar,
+            PlayerButtonColors: $scope.PlayerButtonColors,
+            ContentStyle: $scope.ContentStyle
         });
         if ($scope.VideoPlayer.ended && $scope.CurrentPLPosition != null){
             log.info('Song finished. Got to the next one.');
@@ -113,7 +142,14 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                     }
                 }
             }
-
+            if ($scope.CurrentVideoInfo && $scope.CurrentVideoInfo.snippet && $scope.CurrentVideoInfo.snippet.thumbnails && $scope.CurrentVideoInfo.snippet.thumbnails.maxres){
+                if ($scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path){
+                    $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path;
+                } else {
+                    $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.url;
+                }
+            }
+            $rootScope.$emit('VideoInformationLoaded');
         });
     };
 
