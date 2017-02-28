@@ -22,6 +22,13 @@ an.directive('mdPlayer', () => {
                 $rootScope.$emit('set volume', $scope.volume);
             });
 
+            $scope.ContentStyle = "height: 100%";
+            $rootScope.$on('ApplyColors', (ev, PlayerToolbar, PlayerButtonColors, ContentStyle) => {
+                $scope.PlayerButtonColors = PlayerButtonColors;
+                $scope.PlayerToolbar = PlayerToolbar;
+                $scope.ContentStyle = ContentStyle;
+                $scope.safeApply();
+            });
             $rootScope.$on('UpdatePlayerData', (ev, Data) => {
                 $scope.Data = Data;
                 $scope.volume = Data.volume;
@@ -77,10 +84,10 @@ an.directive('mdPlayer', () => {
             });
         },
         link: (scope, elem, attrs) => {
-            scope.safeApply = function(fn) {
+            scope.safeApply = function (fn) {
                 const phase = this.$root.$$phase;
-                if(phase == '$apply' || phase == '$digest') {
-                    if(fn && (typeof(fn) === 'function')) {
+                if (phase == '$apply' || phase == '$digest') {
+                    if (fn && (typeof(fn) === 'function')) {
                         fn();
                     }
                 } else {

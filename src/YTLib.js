@@ -12,6 +12,9 @@ const fs = require('fs');
 function YTLib(video_id, link) {
     YTLib.prototype.self().video_id = video_id;
     YTLib.prototype.self().link = link;
+    this.extractBestAudioFormat = this.extractBestAudioFormat.bind(this);
+    this.download = this.download.bind(this);
+    this.info = this.info.bind(this);
 }
 
 YTLib.prototype = new EventEmitter();
@@ -45,6 +48,8 @@ YTLib.prototype.extractBestAudioFormat = function (callback) {
 };
 
 YTLib.prototype.download = function (downloadlocation, filename, save, callback, pipeto, headers) {
+    const Emitter = new EventEmitter();
+
     const self = YTLib.prototype.self();
     this.extractBestAudioFormat(() => {
         if (self.possibleFormats.length > 0) {
@@ -68,18 +73,25 @@ YTLib.prototype.download = function (downloadlocation, filename, save, callback,
             const savepath = path.join(loc, filename);
             const p = progress(request(self.possibleFormats[0].url, {
                 encoding: null,
-                headers: headers?headers:{}
-            })).on('progress', (state) => {
+                headers: headers ? headers : {}
+            }));
+
+            p.on('progress', (state) => {
                 self.emit('progress', state);
-            }).on('error', (error) => {
+                Emitter.emit('progress', state);
+            });
+
+            p.on('error', (error) => {
                 self.emit('error', error);
-            }).on('end', () => {
+            });
+
+            p.on('end', () => {
                 callback(filename);
             });
             if (save) {
                 p.pipe(fs.createWriteStream(savepath));
             }
-            if (pipeto){
+            if (pipeto) {
                 p.pipe(pipeto);
             }
             self.once('abort', () => {
@@ -90,6 +102,8 @@ YTLib.prototype.download = function (downloadlocation, filename, save, callback,
             if (callback) callback("No format is possible");
         }
     });
+
+    return Emitter;
 };
 
 YTLib.prototype.info = function (callback) {

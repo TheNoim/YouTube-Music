@@ -14,7 +14,7 @@
       style="height: 100%">
     <div style="height: 0px; width: 0px; display: none;">
         <audio id="HTMLVideoPlayer">
-            <source src="{{ CurrentVideoSrc }}">
+            <source ng-src="{{ CurrentVideoSrc }}">
         </audio>
     </div>
     <md-sidenav md-component-id="SideNav">
@@ -36,15 +36,20 @@
             <md-list-item ng-click="toggleSideNav()" ui-sref="search-youtube">
                 <span>Search on YT</span>
             </md-list-item>
+            <md-list-item ng-click="toggleSideNav()" ui-sref="download">
+                <span>Downloads</span>
+            </md-list-item>
         </md-list>
     </md-sidenav>
-    <md-toolbar flex="nogrow" md-whiteframe="10" class="">
+    <md-toolbar style="{{ ToolbarColors }}" flex="nogrow" md-whiteframe="10" class="">
         <div class="md-toolbar-tools">
-            <md-button class="md-icon-button" ng-click="toggleSideNav()">
+            <md-button style="{{ PlayerButtonColors }}" class="md-icon-button" ng-click="toggleSideNav()">
                 <md-icon>menu</md-icon>
             </md-button>
             <span ng-bind="($title || 'Home')"></span>
             <span flex></span>
+            <md-button ng-click="downloadTestPL()">Download Playlist Test</md-button>
+            <md-button ng-click="downloadTest()">Download Test</md-button>
             <md-button ng-click="PlayTest()">Play Test</md-button>
             <md-autocomplete md-input-id="SearchField" placeholder="Search" md-search-text-change="DoQuery(textquery)"
                              ng-if="search" class="nga-slide-right nga-fast nga-stagger-fast" flex="30"

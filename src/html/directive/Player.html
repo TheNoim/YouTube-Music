@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<div layout="row" layout-align="center center" flex="100" style="height: 100%">
+<div layout="row" layout-align="center center" flex="100" style="{{ ContentStyle }}">
     <div layout="column" flex="100" layout-align="center center" style="height: 100%">
         <div layout="column" flex>
-            <img src="{{Data.CurrentVideoInfo.snippet.thumbnails.maxres.url}}" class="no-select" style="width: auto;height: 100%;">
+            <img src="{{Data.Thumbnail}}" class="no-select" style="width: auto;height: 100%;">
         </div>
-        <md-toolbar flex="initial" style="max-height: 20%;" class="no-select">
+        <md-toolbar id="PlayerToolbar" flex="initial" style="{{ PlayerToolbar }}" class="no-select">
             <md-progress-linear class="md-accent md-hue-3 no-select" md-mode="buffer" value="{{ Data.percent }}"
                                 md-buffer-value="{{ Data.BufferPercent }}" id="player_progress">
             </md-progress-linear>
@@ -16,20 +16,20 @@
             <div layout="row" layout-align="space-between">
                 <div layout="row">
                     <md-button class="md-icon-button" ng-disabled="!Data.CurrentPLPosition && !Data.CurrentPLPosition + 1 > 1 || loadingPL" ng-click="back()">
-                        <md-icon>skip_previous</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}">skip_previous</md-icon>
                     </md-button>
                     <md-button class="md-icon-button" ng-click="triggerPlayer()" ng-disabled="loadingPL">
-                        <md-icon ng-if="!Data.playing">play_arrow</md-icon>
-                        <md-icon ng-if="Data.playing">pause</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}" ng-if="!Data.playing">play_arrow</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}" ng-if="Data.playing">pause</md-icon>
                     </md-button>
                     <md-button class="md-icon-button" ng-disabled="!Data.CurrentPLPosition && !Data.CurrentPLPosition + 1 < Data.CurrentPL.item.length || loadingPL" ng-click="skip()">
-                        <md-icon>skip_next</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}">skip_next</md-icon>
                     </md-button>
                 </div>
                 <div layout="row">
                     <md-button class="md-icon-button" ng-click="triggerMute()">
-                        <md-icon ng-if="Data.muted">volume_off</md-icon>
-                        <md-icon ng-if="!Data.muted">volume_up</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}" ng-if="Data.muted">volume_off</md-icon>
+                        <md-icon style="{{ PlayerButtonColors }}" ng-if="!Data.muted">volume_up</md-icon>
                     </md-button>
                     <md-slider-container>
                         <md-slider md-discrete ng-model="volume" min="0" max="1" step="0.01"></md-slider>

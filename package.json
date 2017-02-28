@@ -1,6 +1,6 @@
 {
   "name": "YouTube-Music",
-  "version": "0.0.1",
+  "version": "0.3.0",
   "description": "A electron youtube music/video player (I hate it to use a browser to listen to music)",
   "main": "src/main.js",
   "repository": "https://github.com/TheNoim/YouTube-Music.git",
@@ -28,7 +28,9 @@
     "electron"
   ],
   "dependencies": {
+    "append-query": "^2.0.1",
     "async": "^2.1.4",
+    "bluebird": "^3.4.7",
     "electron-debug": "^1.1.0",
     "electron-ipc-socket": "^1.2.4",
     "electron-is-dev": "^0.1.2",
@@ -38,6 +40,8 @@
     "get-youtube-id": "^1.0.0",
     "http": "^0.0.0",
     "nedb": "^1.8.0",
+    "node-vibrant": "^3.0.0-alpha.2",
+    "optional-callback": "^1.0.1",
     "percentage-calc": "^0.0.1",
     "request": "^2.79.0",
     "request-progress": "^3.0.0",

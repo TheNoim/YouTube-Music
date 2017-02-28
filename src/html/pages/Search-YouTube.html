@@ -1,28 +1,17 @@
 <div layout-padding flex="100">
-    <div flex>
+    <div flex layout="row" layout-align="space-between center">
         <md-input-container placeholder="Show only" style="width: 30%" flex="nogrow">
             <md-select ng-model="showonly" style="width: 100%" flex>
                 <md-option ng-value="'playlist'">Playlist's</md-option>
                 <md-option ng-value="'video'">Video's</md-option>
             </md-select>
         </md-input-container>
+        <md-autocomplete flex="45" md-no-cache="true" md-selected-item-change="SearchOnYT(YTSQuery)" placeholder="Search on YouTube" md-item-text="QueryResult.snippet.title" md-search-text="YTSQuery" md-items="QueryResult in SearchOnYT(YTSQuery)">
+            <md-item-template>
+                <span md-highlight-text="YTSQuery">{{ QueryResult.snippet.title }}</span>
+            </md-item-template>
+        </md-autocomplete>
     </div>
-    <!--<div layout="row" layout-wrap>-->
-    <!--<md-card ng-repeat="QueryResult in QueryResults" flex="nogrow" style="width: 240px" class="nga-slide-left nga-default nga-stagger-fast">-->
-    <!--<img src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-card-image">-->
-    <!--<md-card-title>-->
-    <!--<md-card-title-text>-->
-    <!--<span class="md-headline">{{ QueryResult.snippet.title }}</span>-->
-    <!--</md-card-title-text>-->
-    <!--</md-card-title>-->
-    <!--<md-card-actions>-->
-    <!--<md-button class="md-icon-button">-->
-    <!--<md-icon>play_arrow</md-icon>-->
-    <!--</md-button>-->
-    <!--<md-button class="md-icon-button" ng-disabled="!QueryResult.checked" ng-click="AddOrRemove(QueryResult, $index)"><md-icon ng-bind="QueryResult.add_button">add</md-icon></md-button>-->
-    <!--</md-card-actions>-->
-    <!--</md-card>-->
-    <!--</div>-->
     <md-list flex="100">
         <md-list-item ng-repeat="QueryResult in QueryResults" class="md-3-line nga-collapse nga-default">
             <img ng-src="{{ QueryResult.snippet.thumbnails.high.url }}" class="md-avatar no-select" ng-click="showDetails($index)"
@@ -32,6 +21,12 @@
                 <h4>by {{ QueryResult.snippet.channelTitle }}</h4>
                 <p>{{ QueryResult.snippet.description }}</p>
             </div>
+            <md-button ng-click="downloadVideo(QueryResult.id.videoId)" class="md-icon-button md-secondary no-select" ng-if="QueryResult.id.kind == 'youtube#video'">
+                <md-icon>file_download</md-icon>
+            </md-button>
+            <md-button ng-click="downloadPlaylist(QueryResult.id.playlistId)" class="md-icon-button md-secondary no-select" ng-if="QueryResult.id.kind == 'youtube#playlist'">
+                <md-icon>file_download</md-icon>
+            </md-button>
             <md-button ng-click="play($index)" class="md-icon-button md-secondary no-select">
                 <md-icon>play_arrow</md-icon>
             </md-button>
@@ -41,5 +36,4 @@
             </md-button>
         </md-list-item>
     </md-list>
-
 </div>
