@@ -13,6 +13,11 @@ const Express = require('./Express');
 const NeDB = require('nedb');
 const fs = require('fs-extra');
 
+
+app.commandLine.appendSwitch('enable-smooth-scrolling', '1');
+app.commandLine.appendSwitch('disable-gpu', '1');
+app.commandLine.appendSwitch('enable-experimental-web-platform-features', '1');
+
 process.on('uncaughtException', function (e) {
     log.error(e);
 });

@@ -1,6 +1,6 @@
 {
   "name": "YouTube-Music",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A electron youtube music/video player (I hate it to use a browser to listen to music)",
   "main": "src/main.js",
   "repository": "https://github.com/TheNoim/YouTube-Music.git",

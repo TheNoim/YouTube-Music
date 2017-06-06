@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no"/>
     <link rel="stylesheet" href="../comp/angular-material/angular-material.min.css">
-    <link rel="stylesheet" href="../comp/angular-animate-css/build/nga.all.min.css">
+    <!--<link rel="stylesheet" href="../comp/angular-animate-css/build/nga.all.min.css">-->
     <link rel="stylesheet" href="../comp/md-font/package/iconfont/material-icons.css">
     <link rel="stylesheet" href="style.css">
     <title>YouTube Music Player</title>
 </head>
 <body ng-app="YouTubePlayer" ng-cloak style="height: 100vh" flex-auto>
-<main ng-controller="MainController" layout="column" class="nga-fade nga-default nga-stagger-slow" flex-auto
+<main ng-controller="MainController" layout="column" flex-auto
       style="height: 100%">
     <div style="height: 0px; width: 0px; display: none;">
         <audio id="HTMLVideoPlayer">
@@ -66,7 +66,7 @@
         </div>
     </md-toolbar>
     <md-content style="height: 100%">
-        <div ui-view class="nga-fade nga-default nga-stagger-slow" style="height: 100%"></div>
+        <div ui-view class="" style="height: 100%"></div>
     </md-content>
 </main>
 <script src="../comp/angular/angular.min.js"></script>
