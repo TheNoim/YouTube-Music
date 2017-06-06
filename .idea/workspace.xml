@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="18ecf177-9a24-48f8-94f6-315807b4c1ad" name="Default" comment="v0.2.1 [WIP]">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.travis.yml" afterPath="$PROJECT_DIR$/.travis.yml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/package.json" afterPath="$PROJECT_DIR$/package.json" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Express.js" afterPath="$PROJECT_DIR$/src/Express.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/MainSocketEvents.js" afterPath="$PROJECT_DIR$/src/MainSocketEvents.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/html/index.js" afterPath="$PROJECT_DIR$/src/html/index.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/yarn.lock" afterPath="$PROJECT_DIR$/yarn.lock" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -119,13 +113,13 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="package.json" pinned="false" current-in-tab="false">
+      <file leaf-file-name="package.json" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/package.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-54">
-              <caret line="12" column="26" lean-forward="false" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
+            <state relative-caret-position="138">
+              <caret line="6" column="34" lean-forward="false" selection-start-line="6" selection-start-column="34" selection-end-line="6" selection-end-column="34" />
               <folding>
-                <marker date="1496737189794" expanded="true" signature="813:1514" ph="{&quot;append-query&quot;: &quot;^2.0.1&quot;...}" />
+                <marker date="1496740886531" expanded="true" signature="813:1514" ph="{&quot;append-query&quot;: &quot;^2.0.1&quot;...}" />
               </folding>
             </state>
           </provider>
@@ -141,7 +135,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name=".travis.yml" pinned="false" current-in-tab="true">
+      <file leaf-file-name=".travis.yml" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/.travis.yml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="518">
@@ -151,14 +145,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="YouTubeLibrary.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/YouTubeLibrary.js">
+      <file leaf-file-name="package-lock.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/package-lock.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="439">
-              <caret line="401" column="26" lean-forward="false" selection-start-line="401" selection-start-column="26" selection-end-line="401" selection-end-column="26" />
-              <folding>
-                <element signature="e#0#47#0" expanded="false" />
-              </folding>
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -240,11 +232,11 @@
         <option value="$PROJECT_DIR$/src/html/directive/Player.html" />
         <option value="$PROJECT_DIR$/src/html/index.html" />
         <option value="$PROJECT_DIR$/README.md" />
-        <option value="$PROJECT_DIR$/package.json" />
         <option value="$PROJECT_DIR$/src/Express.js" />
         <option value="$PROJECT_DIR$/src/MainSocketEvents.js" />
         <option value="$PROJECT_DIR$/src/html/index.js" />
         <option value="$PROJECT_DIR$/.travis.yml" />
+        <option value="$PROJECT_DIR$/package.json" />
       </list>
     </option>
   </component>
@@ -521,7 +513,7 @@
       <workItem from="1486886756751" duration="4647000" />
       <workItem from="1488100829807" duration="5000" />
       <workItem from="1488293230442" duration="4536000" />
-      <workItem from="1496734387372" duration="5435000" />
+      <workItem from="1496734387372" duration="6447000" />
     </task>
     <task id="LOCAL-00001" summary="WIP">
       <created>1486245734117</created>
@@ -625,7 +617,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="173725000" />
+    <option name="totallyTimeSpent" value="174737000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -702,13 +694,6 @@
     </PATH>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/node_modules/ytdl-core/lib/info.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="183">
-          <caret line="46" column="30" lean-forward="false" selection-start-line="46" selection-start-column="30" selection-end-line="46" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/node_modules/ytdl-core/lib/util.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="438">
@@ -1092,16 +1077,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/package.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-54">
-          <caret line="12" column="26" lean-forward="false" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
-          <folding>
-            <marker date="1496737189794" expanded="true" signature="813:1514" ph="{&quot;append-query&quot;: &quot;^2.0.1&quot;...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gulpfile.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="267">
@@ -1115,6 +1090,24 @@
         <state relative-caret-position="518">
           <caret line="31" column="46" lean-forward="false" selection-start-line="31" selection-start-column="46" selection-end-line="31" selection-end-column="46" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package-lock.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/package.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="138">
+          <caret line="6" column="34" lean-forward="false" selection-start-line="6" selection-start-column="34" selection-end-line="6" selection-end-column="34" />
+          <folding>
+            <marker date="1496740886531" expanded="true" signature="813:1514" ph="{&quot;append-query&quot;: &quot;^2.0.1&quot;...}" />
+          </folding>
         </state>
       </provider>
     </entry>
