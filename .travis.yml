@@ -25,6 +25,7 @@ before_install:
   - npm install bower -g
 install:
   - yarn
+  - node_modules/.bin/electron-rebuild
   - travis_wait 30 bower install
 script:
   - travis_wait 30 ./node_modules/.bin/gulp

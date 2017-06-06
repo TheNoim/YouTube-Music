@@ -14,7 +14,6 @@ const percentage = require('percentage-calc');
 const async = require('async');
 const Vibrant = require('node-vibrant');
 
-
 const an = angular.module('YouTubePlayer', ['ngMaterial', 'ui.router', 'ui.router.title']);
 an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootScope) => {
     $scope.safeApply = function (fn) {
@@ -56,6 +55,27 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
         $rootScope.$emit('VideoPlayerIsNowPlaying');
     };
 
+    function setVideoMeta() {
+        if ($scope.CurrentVideoInfo.snippet.title && $scope.CurrentVideoInfo.snippet.channelTitle) {
+            const o = {
+                title: $scope.CurrentVideoInfo.snippet.title,
+                artist: $scope.CurrentVideoInfo.snippet.channelTitle,
+                album: $scope.CurrentPL && $scope.CurrentPL.snippet && $scope.CurrentPL.snippet.title ? $scope.CurrentPL.snippet.title : $scope.CurrentVideoInfo.snippet.channelTitle,
+                albumArt: `http://127.0.0.1:2458/t/${$scope.CurrentVideoId}`,
+                state: $scope.VideoPlayer.paused ? "paused" : "playing",
+                id: $scope.MID,
+                currentTime: Math.round($scope.VideoPlayer.currentTime * 1000),
+                duration: Math.round($scope.VideoPlayer.duration * 1000)
+            };
+            $scope.socket.send('setMetaData', o);
+            console.log(o);
+        } else {
+            $scope.socket.send('setMetaData', {
+                "state": "stopped"
+            });
+        }
+    }
+
     $rootScope.$on('VideoInformationLoaded', () => {
         console.log(`Thumbnail: ${$scope.CurrentThumbnail}`);
         Vibrant.from($scope.CurrentThumbnail).getPalette((error, Palette) => {
@@ -80,7 +100,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
 
     $scope.AllDownloads = [];
 
-    setInterval(function () {
+    function updateData() {
         if ($scope.VideoPlayer.duration) {
             //$scope.PrettyDuration = extround($scope.VideoPlayer.duration / 60, 100).toString().replace('.', ':');
             $scope.PrettyDuration = Math.floor($scope.VideoPlayer.duration / 60) + ":" + Math.round($scope.VideoPlayer.duration % 60);
@@ -124,12 +144,18 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                 $rootScope.$emit('Play', $scope.CurrentPL.items[0].snippet.resourceId.videoId, $scope.CurrentPL.items[0].snippet.position);
             }
         }
-    }, 100);
+        setVideoMeta();
+    }
+
+    setInterval(function () {
+        updateData();
+    }, 1000);
 
     $scope.VideoPlayer.onloadstart = () => {
         socket.send('get video informations', {videoId: $scope.CurrentVideoId}, (error, data) => {
             console.log(data);
             if (data.error) throw data.error;
+            $scope.MID = getRandomInt(1, 10000);
             if (!data.error) {
                 $scope.CurrentVideoInfo = data;
                 if (!$scope.CurrentVideoInfo.snippet.thumbnails.maxres){
@@ -145,11 +171,15 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
             if ($scope.CurrentVideoInfo && $scope.CurrentVideoInfo.snippet && $scope.CurrentVideoInfo.snippet.thumbnails && $scope.CurrentVideoInfo.snippet.thumbnails.maxres){
                 if ($scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path){
                     $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.Path;
+                    $scope.CurrentThumbnailIsPath = true;
                 } else {
                     $scope.CurrentThumbnail = $scope.CurrentVideoInfo.snippet.thumbnails.maxres.url;
+                    $scope.CurrentThumbnailIsPath = false;
                 }
             }
             $rootScope.$emit('VideoInformationLoaded');
+            console.log($scope.CurrentPL);
+            updateData();
         });
     };
 
@@ -167,10 +197,12 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                 $rootScope.$emit('Play', $scope.CurrentPL.items[0].snippet.resourceId.videoId, $scope.CurrentPL.items[0].snippet.position);
             }
         }
+        updateData();
     });
 
     $rootScope.$on('set volume', (ev, volume) => {
         $scope.VideoPlayer.volume = volume;
+        updateData();
     });
 
     $rootScope.$on('Last song in pl', () => {
@@ -181,6 +213,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                 $rootScope.$emit('Play', $scope.CurrentPL.items[$scope.CurrentPLPosition - 1].snippet.resourceId.videoId, $scope.CurrentPL.items[$scope.CurrentPLPosition - 1].snippet.position);
             }
         }
+        updateData();
     });
 
     $scope.CurrentVideoInfo = {};
@@ -199,6 +232,7 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
 
     $rootScope.$on('Set position', (ev, position) => {
         $scope.VideoPlayer.currentTime = position;
+        updateData();
     });
 
     $rootScope.$on('Play', (ev, videoid, plPosition) => {
@@ -250,9 +284,30 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
     $rootScope.$on('Trigger player', () => {
         if ($scope.VideoPlayer.paused) {
             $scope.VideoPlayer.play();
+            updateData();
         } else {
             $scope.VideoPlayer.pause();
+            updateData();
         }
+    });
+
+    socket.on('event:MediaService_play', () => {
+        $scope.VideoPlayer.play();
+    });
+    socket.on('event:MediaService_pause', () => {
+        $scope.VideoPlayer.pause();
+    });
+    socket.on('event:MediaService_playPause', () => {
+        $rootScope.$emit('Trigger player');
+    });
+    socket.on('event:MediaService_next', () => {
+        $rootScope.$emit('Skip current song');
+    });
+    socket.on('event:MediaService_previous', () => {
+        $rootScope.$emit('Last song in pl');
+    });
+    socket.on('event:MediaService_seek', (msg) => {
+        $rootScope.$emit('Set position', msg.data().to / 1000);
     });
 
     $scope.PlayTest = function () {
@@ -364,6 +419,10 @@ an.controller('MainController', ($scope, $mdDialog, $mdSidenav, $state, $rootSco
                 $scope.filterDownloaded($scope.AllDownloadedQuery);
             });
         });
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
 });

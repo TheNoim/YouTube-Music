@@ -9,6 +9,7 @@ const fs = require('fs-extra');
 const DL = require('./DownloadManager');
 const path = require('path');
 const {app} = require('electron');
+const MediaService = require('electron-media-service');
 
 let downloadTaskList = {};
 
@@ -20,6 +21,34 @@ module.exports = function (cfg) {
     const window = cfg.mainWindow;
     const db = cfg.db;
     const DownloadManager = new DL(db, socket);
+
+    const myService = new MediaService();
+
+    myService.startService();
+
+    socket.on('event:setMetaData', (msg) => {
+        //log.info("setMetaData()");
+        myService.setMetaData(msg.data());
+    });
+
+    myService.on('play', () => {
+        socket.send('MediaService_play');
+    });
+    myService.on('pause', () => {
+        socket.send('MediaService_pause');
+    });
+    myService.on('playPause', () => {
+        socket.send('MediaService_playPause');
+    });
+    myService.on('next', () => {
+        socket.send('MediaService_next');
+    });
+    myService.on('previous', () => {
+        socket.send('MediaService_previous');
+    });
+    myService.on('seek', (to) => {
+        socket.send('MediaService_seek', {to: to});
+    });
 
     socket.on('message:in library ?', (msg) => {
         const data = msg.data();
