@@ -1,4 +1,7 @@
 # YouTube-Music
+
+# Note: I will probably never update this player again. It never reached the beta status. If you want to update it, make a pull request.
+
 ![Picture of this awesome player](https://raw.githubusercontent.com/TheNoim/YouTube-Music/master/Alpha.gif)
 There is no good youtube player for music, this is why I did this :D  
 At the moment this player is highly experimental and you need to start it over the terminal or cmd.
